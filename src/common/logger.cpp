@@ -1,17 +1,5 @@
 #include <common/logger.h>
 #include <common/utils.h>
-
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <iostream>
-
-#ifndef gettid
-#include <sys/syscall.h>
-#define gettid() syscall(SYS_gettid)
-#endif
-
 namespace sms
 {
 

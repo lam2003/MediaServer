@@ -2,8 +2,7 @@
 #define SMS_ONCE_TOKEN_H
 
 #include <common/noncopyable.h>
-
-#include <functional>
+#include <common/global_inc.h>
 
 namespace sms
 {

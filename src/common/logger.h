@@ -3,13 +3,7 @@
 
 #include <thread/semaphore.h>
 #include <common/noncopyable.h>
-
-#include <functional>
-#include <map>
-#include <memory>
-#include <sstream>
-#include <thread>
-#include <list>
+#include <common/global_inc.h>
 
 namespace sms
 {

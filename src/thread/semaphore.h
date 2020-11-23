@@ -1,10 +1,7 @@
 #ifndef SMS_SEMAPHORE_H
 #define SMS_SEMAPHORE_H
 
-#include <condition_variable>
-#include <mutex>
-
-#include <stdint.h>
+#include <common/global_inc.h>
 
 namespace sms
 {

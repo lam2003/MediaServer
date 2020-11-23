@@ -1,9 +1,7 @@
 #ifndef SMS_UTILS_H
 #define SMS_UTILS_H
 
-#include <memory>
-#include <sstream>
-#include <string>
+#include <common/global_inc.h>
 
 #define INSTANCE_IMPL(class_name, ...)                   \
     class_name &class_name::Instance()                   \
