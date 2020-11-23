@@ -1,0 +1,7 @@
+#ifndef EDU_SPEECH_SERVER_REPO_VERSION_H
+#define EDU_SPEECH_SERVER_REPO_VERSION_H
+#define REPO_VERSION "bc5f19-dirty"
+#define REPO_DATE "2020-11-23"
+#define REPO_HASH "bc5f1977663a0d6901295debdd7c0997a651d11e"
+#define REPO_AUTHOR_EMAIL "noreply@github.com"
+#endif

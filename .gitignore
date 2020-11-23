@@ -1,0 +1,5 @@
+# build path
+build
+
+# IDE
+.vscode
