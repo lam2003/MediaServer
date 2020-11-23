@@ -1,5 +1,8 @@
 # build path
 build
 
+# version file
+src/common/repo_version.h
+
 # IDE
 .vscode
