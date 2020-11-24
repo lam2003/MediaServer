@@ -204,6 +204,18 @@ namespace sms
     LogContextCapturer(Logger::Instance(), LERROR, __FILE__, __FUNCTION__, \
                        __LINE__)
 
+#define SMS_LOG_STR "%s:%d"
+#define SMS_LOG_SEPARATOR_CHAR_STD "\n"
+#define SMS_LOG_STR_DESC SMS_LOG_STR " | "
+#define SMS_LOG_ARG __FILE__,__LINE__
+#define SMS_ABORT(desc, ...)                                                                                           \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        std::fprintf(stderr, "(ABORT) " SMS_LOG_STR_DESC desc SMS_LOG_SEPARATOR_CHAR_STD, SMS_LOG_ARG, ##__VA_ARGS__); \
+        std::fflush(stderr);                                                                                           \
+        std::abort();                                                                                                  \
+    } while (0)
+
 } // namespace sms
 
 #endif
