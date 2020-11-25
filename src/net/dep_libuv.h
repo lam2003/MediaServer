@@ -11,7 +11,7 @@ namespace sms
     {
     public:
         static void ClassInit();
-        static void ClassDestory();
+        static void ClassDestroy();
         static void PrintVersion();
         static void RunLoop(uv_run_mode mode = UV_RUN_DEFAULT);
         static uv_loop_t *GetLoop();

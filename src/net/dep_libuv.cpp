@@ -15,7 +15,7 @@ namespace sms
         }
     }
 
-    void DepLibUV::ClassDestory()
+    void DepLibUV::ClassDestroy()
     {
         if (loop_)
         {
