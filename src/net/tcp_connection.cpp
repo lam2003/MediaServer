@@ -2,7 +2,7 @@
 
 #include <net/tcp_connection.h>
 #include <net/socket_utils.h>
-#include <common/dep_libuv.h>
+#include <net/dep_libuv.h>
 #include <common/logger.h>
 
 namespace sms
