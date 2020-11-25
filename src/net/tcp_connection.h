@@ -21,8 +21,8 @@ namespace sms
             virtual ~Listener() = default;
 
         public:
-            virtual void OnTcpConnectionClosed(TcpConnection *connection) = 0;
-            virtual size_t OnTcpConnectionPacketReceived(TcpConnection *connection, const uint8_t *data, size_t len) = 0;
+            virtual void OnTcpConnectionClosed(TcpConnection *conn) = 0;
+            virtual size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len) = 0;
         };
 
         class UvWriteData : public NonCopyable
@@ -62,7 +62,7 @@ namespace sms
         const struct sockaddr *GetPeerAddr() const;
         uint16_t GetPeerPort() const;
         bool IsClosed() const;
-        uv_tcp_t *GetUVHandle() const;
+        uv_tcp_t *GetUvHandle() const;
         size_t GetSentBytes() const;
         size_t GetRecvBytes() const;
 
@@ -78,7 +78,7 @@ namespace sms
     private:
         size_t buffer_size_{0u};
         uint8_t *buffer_{nullptr};
-        size_t buffer_len_{0u};
+        size_t buffer_data_len_{0u};
         size_t read_pos_{0u};
 
         std::string local_ip_;

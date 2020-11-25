@@ -140,9 +140,9 @@ namespace sms
         return true;
     }
 
-    uv_handle_t *SocketUtils::Bind(SOCK_TYPE sock_type, std::string &ip, uint16_t port)
+    uv_handle_t *SocketUtils::Bind(SOCK_TYPE sock_type, const std::string &ip, uint16_t port)
     {
-        if (!NormalizeIp(ip))
+        if (!NormalizeIp(const_cast<std::string &>(ip)))
         {
             return nullptr;
         }
@@ -230,7 +230,7 @@ namespace sms
                 delete handle;
                 return nullptr;
             }
-                        
+
             ret = uv_udp_bind(reinterpret_cast<uv_udp_t *>(handle),
                               reinterpret_cast<sockaddr *>(&addr),
                               flags);

@@ -25,7 +25,7 @@ namespace sms
 
         static bool NormalizeIp(std::string &ip);
 
-        static uv_handle_t *Bind(SOCK_TYPE sock_type, std::string &ip, uint16_t port);
+        static uv_handle_t *Bind(SOCK_TYPE sock_type, const std::string &ip, uint16_t port);
     };
 
 } // namespace sms

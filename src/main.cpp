@@ -1,6 +1,7 @@
 #include <common/logger.h>
 #include <net/tcp_connection.h>
-#include <common/dep_libuv.h>
+#include <net/dep_libuv.h>
+#include <net/socket_utils.h>
 using namespace sms;
 
 int main(int argc, char **argv)
@@ -14,13 +15,18 @@ int main(int argc, char **argv)
     DepLibUV::ClassInit();
     DepLibUV::PrintVersion();
 
-    TcpConnection c(1024 * 1024);
-    c.Setup(nullptr, nullptr, "", 1);
+    // TcpConnection *p =  new TcpConnection(1024 * 1024);
+    // p->Setup(nullptr, nullptr, "", 1);
 
-    // c.Start();
+    // p->Start();
 
-    c.Close();
+    // p->Close();
+    // p->Dump();
+    // delete p;
 
+    std::string ip = "0.0.0.0";
+    SocketUtils::Bind(SocketUtils::SOCK_TCP, ip, 80);
+    // p->Close();
     DepLibUV::RunLoop();
 
     return 0;

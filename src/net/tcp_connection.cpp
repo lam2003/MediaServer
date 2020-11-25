@@ -248,44 +248,44 @@ namespace sms
         }
     }
 
-    inline const struct sockaddr *TcpConnection::GetLocalAddr() const
+    const struct sockaddr *TcpConnection::GetLocalAddr() const
     {
         return reinterpret_cast<struct sockaddr *>(local_addr_);
     }
 
-    inline int TcpConnection::GetLocalFamily() const
+    int TcpConnection::GetLocalFamily() const
     {
         return reinterpret_cast<const struct sockaddr *>(this->local_addr_)->sa_family;
     }
 
-    inline uint16_t TcpConnection::GetLocalPort() const
+    uint16_t TcpConnection::GetLocalPort() const
     {
         return local_port_;
     }
-    inline const struct sockaddr *TcpConnection::GetPeerAddr() const
+    const struct sockaddr *TcpConnection::GetPeerAddr() const
     {
         return reinterpret_cast<const struct sockaddr *>(&peer_addr_);
     }
 
-    inline uint16_t TcpConnection::GetPeerPort() const
+    uint16_t TcpConnection::GetPeerPort() const
     {
         return peer_port_;
     }
-    inline bool TcpConnection::IsClosed() const
+    bool TcpConnection::IsClosed() const
     {
         return closed_;
     }
-    inline uv_tcp_t *TcpConnection::GetUVHandle() const
+    uv_tcp_t *TcpConnection::GetUvHandle() const
     {
         return uv_handle_;
     }
 
-    inline size_t TcpConnection::GetSentBytes() const
+    size_t TcpConnection::GetSentBytes() const
     {
         return sent_bytes_;
     }
 
-    inline size_t TcpConnection::GetRecvBytes() const
+    size_t TcpConnection::GetRecvBytes() const
     {
         return recv_bytes_;
     }
@@ -294,7 +294,7 @@ namespace sms
     {
         if (nread > 0)
         {
-            buffer_len_ += static_cast<size_t>(nread);
+            buffer_data_len_ += static_cast<size_t>(nread);
             recv_bytes_ += static_cast<size_t>(nread);
 
             user_on_tcp_connection_read();
@@ -315,11 +315,11 @@ namespace sms
 
     inline void TcpConnection::OnUvAlloc(size_t suggested_size, uv_buf_t *buf)
     {
-        buf->base = reinterpret_cast<char *>(buffer_ + buffer_len_);
+        buf->base = reinterpret_cast<char *>(buffer_ + buffer_data_len_);
 
-        if (buffer_size_ > buffer_len_)
+        if (buffer_size_ > buffer_data_len_)
         {
-            buf->len = buffer_size_ - buffer_len_;
+            buf->len = buffer_size_ - buffer_data_len_;
         }
         else
         {
@@ -387,7 +387,7 @@ namespace sms
             return;
         }
 
-        size_t data_len = buffer_len_ - read_pos_;
+        size_t data_len = buffer_data_len_ - read_pos_;
 
         size_t consumed = 0;
         consumed = listener_->OnTcpConnectionPacketReceived(this,
@@ -397,7 +397,7 @@ namespace sms
         if (consumed >= data_len)
         {
             // 清空buffer
-            buffer_len_ = 0;
+            buffer_data_len_ = 0;
             read_pos_ = 0;
         }
         else
@@ -406,13 +406,13 @@ namespace sms
         }
 
         // 检查缓存是否满了
-        if (buffer_len_ == buffer_size_)
+        if (buffer_data_len_ == buffer_size_)
         {
             if (read_pos_ != 0)
             {
                 std::memmove(
-                    buffer_, buffer_ + read_pos_, buffer_len_ - read_pos_);
-                buffer_len_ = buffer_size_ - read_pos_;
+                    buffer_, buffer_ + read_pos_, buffer_data_len_ - read_pos_);
+                buffer_data_len_ = buffer_size_ - read_pos_;
                 read_pos_ = 0;
             }
             else
