@@ -40,7 +40,7 @@ execute_process(COMMAND ${GIT_EXECUTABLE} log -1 --format=%ce
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 file(WRITE ${PROJECT_SOURCE_DIR}/src/common/repo_version.h
-    "#ifndef EDU_SPEECH_SERVER_REPO_VERSION_H\n#define EDU_SPEECH_SERVER_REPO_VERSION_H\n#define REPO_VERSION \"${GIT_REPO_VERSION}\"\n#define REPO_DATE \"${GIT_REPO_DATE}\"\n#define REPO_HASH \"${GIT_REPO_HASH}\"\n#define REPO_AUTHOR_EMAIL \"${REPO_AUTHOR_EMAIL}\"\n#endif\n"
+    "#ifndef SMS_REPO_VERSION_H\n#define SMS_REPO_VERSION_H\n#define REPO_VERSION \"${GIT_REPO_VERSION}\"\n#define REPO_DATE \"${GIT_REPO_DATE}\"\n#define REPO_HASH \"${GIT_REPO_HASH}\"\n#define REPO_AUTHOR_EMAIL \"${REPO_AUTHOR_EMAIL}\"\n#endif\n"
 )
 
 add_subdirectory(3rdparty/libuv)
