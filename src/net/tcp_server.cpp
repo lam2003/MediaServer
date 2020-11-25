@@ -79,10 +79,10 @@ namespace sms
     {
         LOG_I << SMS_LOG_SEPARATOR_CHAR_STD
               << "<TcpServer>" << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  localIp    : " << local_ip_ << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  localPort  : " << local_port_ << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  closed     : " << closed_ << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  connections     : " << conns_.size() << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  localIp     : " << local_ip_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  localPort   : " << local_port_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  closed      : " << closed_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  connections : " << conns_.size() << SMS_LOG_SEPARATOR_CHAR_STD
               << "</TcpServer>" << std::endl;
     }
 

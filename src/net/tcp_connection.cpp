@@ -300,14 +300,6 @@ namespace sms
             user_on_tcp_connection_read();
             return;
         }
-        else if (nread == UV_EOF || nread == UV_ECONNRESET)
-        {
-            closed_by_peer_ = true;
-        }
-        else
-        {
-            error_ = true;
-        }
 
         Close();
         listener_->OnTcpConnectionClosed(this);
@@ -341,15 +333,6 @@ namespace sms
         }
         else
         {
-            if (status == UV_EPIPE && status == UV_ENOTCONN)
-            {
-                closed_by_peer_ = true;
-            }
-            else
-            {
-                error_ = true;
-            }
-
             LOG_E
                 << "write error, closing the connection: ",
                 uv_strerror(status);

@@ -94,8 +94,6 @@ namespace sms
         size_t sent_bytes_{0u};
 
         bool closed_{false};
-        bool closed_by_peer_{false};
-        bool error_{false};
     };
 
 } // namespace sms
