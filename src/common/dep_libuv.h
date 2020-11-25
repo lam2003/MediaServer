@@ -13,7 +13,7 @@ namespace sms
         static void ClassInit();
         static void ClassDestory();
         static void PrintVersion();
-        static void RunLoop();
+        static void RunLoop(uv_run_mode mode = UV_RUN_DEFAULT);
         static uv_loop_t *GetLoop();
         static uint64_t GetTimeMs();
         static uint64_t GetTimeUs();

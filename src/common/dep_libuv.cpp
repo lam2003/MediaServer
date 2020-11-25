@@ -29,9 +29,9 @@ namespace sms
         LOG_I << "libuv version: " << uv_version_string();
     }
 
-    void DepLibUV::RunLoop()
+    void DepLibUV::RunLoop(uv_run_mode mode)
     {
-        uv_run(loop_, UV_RUN_DEFAULT);
+        uv_run(loop_, mode);
     }
 
     uv_loop_t *DepLibUV::GetLoop()

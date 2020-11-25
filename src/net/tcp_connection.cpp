@@ -9,6 +9,7 @@ namespace sms
 {
     inline static void on_close(uv_handle_t *handle)
     {
+        handle->data = nullptr;
         delete handle;
     }
 
@@ -59,7 +60,6 @@ namespace sms
         }
 
         closed_ = true;
-        uv_handle_->data = nullptr;
 
         if (uv_handle_->loop != nullptr)
         {
@@ -160,7 +160,7 @@ namespace sms
         {
             buffer_len_ += static_cast<size_t>(nread);
             recv_bytes_ += static_cast<size_t>(nread);
-            
+
             user_on_tcp_connection_read();
             return;
         }
