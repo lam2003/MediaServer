@@ -116,6 +116,7 @@ namespace sms
 
     void TcpServer::OnTcpConnectionClosed(TcpConnection *conn)
     {
+        listener_->OnTcpConnectionClosed(conn);
         conns_.erase(conn);
         delete conn;
     }

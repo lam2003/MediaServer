@@ -13,11 +13,12 @@ namespace sms
         {
         public:
             virtual ~Listener() {}
+            virtual void OnTcpConnectionClosed(TcpConnection *conn) = 0;
             virtual size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len) = 0;
         };
 
     public:
-        TcpServer();
+        explicit TcpServer();
         virtual ~TcpServer();
 
     public:
