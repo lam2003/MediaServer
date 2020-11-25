@@ -17,7 +17,7 @@ namespace sms
 
     void DepLibUV::ClassDestory()
     {
-        if (loop_ != nullptr)
+        if (loop_)
         {
             uv_loop_close(loop_);
             delete loop_;

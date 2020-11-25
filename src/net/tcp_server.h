@@ -9,6 +9,14 @@ namespace sms
     class TcpServer : public TcpConnection::Listener
     {
     public:
+        class Listener
+        {
+        public:
+            virtual ~Listener() {}
+            virtual size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len);
+        };
+
+    public:
         TcpServer();
         virtual ~TcpServer();
 
@@ -36,6 +44,7 @@ namespace sms
         std::string local_ip_;
         uint16_t local_port_{0u};
         uv_tcp_t *uv_handle_{nullptr};
+        Listener *listener_{nullptr};
         std::unordered_set<TcpConnection *> conns_;
         bool closed_{false};
     };

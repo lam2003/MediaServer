@@ -111,7 +111,7 @@ namespace sms
         return local_port_;
     }
 
-        void TcpServer::OnTcpConnectionClosed(TcpConnection *conn)
+    void TcpServer::OnTcpConnectionClosed(TcpConnection *conn)
     {
         conns_.erase(conn);
         delete conn;

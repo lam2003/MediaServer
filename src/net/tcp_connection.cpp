@@ -75,7 +75,7 @@ namespace sms
 
         closed_ = true;
 
-        if (uv_handle_->loop != nullptr)
+        if (uv_handle_->loop)
         {
             int ret = uv_read_stop(reinterpret_cast<uv_stream_t *>(uv_handle_));
             if (ret != 0)
@@ -133,6 +133,11 @@ namespace sms
         if (!uv_handle_->loop)
         {
             LOG_E << "error start tcp connection before setup";
+            return -1;
+        }
+
+        if (uv_handle_->read_cb)
+        {
             return -1;
         }
 
