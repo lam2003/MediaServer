@@ -27,6 +27,7 @@ namespace sms
 
         class UvWriteData : public NonCopyable
         {
+        public:
             explicit UvWriteData(size_t store_size)
             {
                 this->store = new uint8_t[store_size];
@@ -54,21 +55,22 @@ namespace sms
                   const std::string &local_ip,
                   uint16_t local_port);
         int Start();
-        // void Write(const uint8_t *data, size_t len, OnSendCB &&cb);
-        // const struct sockaddr *GetLocalAddr() const;
-        // int GetLocalFamily() const;
-        // uint16_t GetLocalPort() const;
-        // const struct sockaddr *GetPeerAddr() const;
-        // uint16_t GetPeerPort() const;
-        // bool IsClosed() const;
-        // uv_tcp_t *GetUVHandle() const;
-        // size_t GetSentBytes() const;
-        // size_t GetRecvBytes() const;
+        void Write(const uint8_t *data, size_t len, OnSendCB &&cb);
+        const struct sockaddr *GetLocalAddr() const;
+        int GetLocalFamily() const;
+        uint16_t GetLocalPort() const;
+        const struct sockaddr *GetPeerAddr() const;
+        uint16_t GetPeerPort() const;
+        bool IsClosed() const;
+        uv_tcp_t *GetUVHandle() const;
+        size_t GetSentBytes() const;
+        size_t GetRecvBytes() const;
 
     public:
         void OnUvRead(ssize_t nread, const uv_buf_t *buf);
         void OnUvAlloc(size_t suggested_size, uv_buf_t *buf);
-        //     void OnUvWrite(int status, OnSendCB &&cb);
+        void OnUvWrite(int status, OnSendCB &&cb);
+
     private:
         bool set_peer_addr();
         void user_on_tcp_connection_read();

@@ -29,6 +29,20 @@ namespace sms
         }
     }
 
+    inline static void on_write(uv_write_t *req, int status)
+    {
+        uv_stream_t *handle = req->handle;
+        TcpConnection *conn = reinterpret_cast<TcpConnection *>(handle);
+        TcpConnection::UvWriteData *write_data = reinterpret_cast<TcpConnection::UvWriteData *>(req->data);
+
+        if (conn)
+        {
+            conn->OnUvWrite(status, std::move(write_data->cb));
+        }
+
+        delete write_data;
+    }
+
     inline static void on_alloc(uv_handle_t *handle, size_t suggested_size, uv_buf_t *buf)
     {
         TcpConnection *conn = reinterpret_cast<TcpConnection *>(handle->data);
@@ -82,6 +96,18 @@ namespace sms
         {
             on_close(reinterpret_cast<uv_handle_t *>(uv_handle_));
         }
+    }
+
+    inline void TcpConnection::Dump() const
+    {
+        LOG_I << SMS_LOG_SEPARATOR_CHAR_STD
+              << "<TcpConnection>" << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  localIp    : " << local_ip_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  localPort  : " << local_port_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  remoteIp   : " << peer_ip_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  remotePort : " << peer_port_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  closed     : " << closed_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "</TcpConnection>" << std::endl;
     }
 
     int TcpConnection::Setup(Listener *listener,
@@ -141,18 +167,128 @@ namespace sms
         return 0;
     }
 
-    void TcpConnection::Dump() const
+    void TcpConnection::Write(const uint8_t *data, size_t len, OnSendCB &&cb)
     {
-        LOG_I << "<TcpConnection>" << std::endl
-              << "  localIp    : " << local_ip_ << std::endl
-              << "  localPort  : " << local_port_ << std::endl
-              << "  remoteIp   : " << peer_ip_ << std::endl
-              << "  remotePort : " << peer_port_ << std::endl
-              << "  closed     : " << closed_ << std::endl
-              << "</TcpConnection>" << std::endl;
+        if (closed_)
+        {
+            if (cb)
+            {
+                cb(false);
+            }
+            return;
+        }
+
+        if (!uv_handle_->loop)
+        {
+            LOG_E << "error send before setup";
+            if (cb)
+            {
+                cb(false);
+            }
+            return;
+        }
+
+        if (len == 0)
+        {
+            if (cb)
+            {
+                cb(false);
+            }
+            return;
+        }
+
+        uv_buf_t buffer = uv_buf_init(reinterpret_cast<char *>(const_cast<uint8_t *>(data)), len);
+        int written = uv_try_write(reinterpret_cast<uv_stream_t *>(uv_handle_), &buffer, 1);
+
+        if (written == static_cast<int>(len))
+        {
+            sent_bytes_ += written;
+            if (cb)
+            {
+                cb(true);
+            }
+            return;
+        }
+        else if (written == UV_EAGAIN || written == UV_EBUSY)
+        {
+            written = 0;
+        }
+        else
+        {
+            LOG_E << "uv_try_write() failed: " << uv_strerror(written);
+            written = 0;
+        }
+
+        size_t pedding_len = len - written;
+        UvWriteData *write_data = new UvWriteData(pedding_len);
+
+        write_data->req.data = write_data;
+        std::memcpy(write_data->store, data + written, pedding_len);
+        write_data->cb = std::move(cb);
+
+        buffer = uv_buf_init(reinterpret_cast<char *>(write_data->store), pedding_len);
+
+        int ret = uv_write(&write_data->req,
+                           reinterpret_cast<uv_stream_t *>(uv_handle_),
+                           &buffer,
+                           1,
+                           static_cast<uv_write_cb>(on_write));
+        if (ret != 0)
+        {
+            LOG_E << "uv_write() failed: " << uv_strerror(ret);
+            if (cb)
+            {
+                cb(false);
+            }
+            delete write_data;
+        }
+        else
+        {
+            sent_bytes_ += pedding_len;
+        }
     }
 
-    // void TcpConnection::Start()
+    inline const struct sockaddr *TcpConnection::GetLocalAddr() const
+    {
+        return reinterpret_cast<struct sockaddr *>(local_addr_);
+    }
+
+    inline int TcpConnection::GetLocalFamily() const
+    {
+        return reinterpret_cast<const struct sockaddr *>(this->local_addr_)->sa_family;
+    }
+
+    inline uint16_t TcpConnection::GetLocalPort() const
+    {
+        return local_port_;
+    }
+    inline const struct sockaddr *TcpConnection::GetPeerAddr() const
+    {
+        return reinterpret_cast<const struct sockaddr *>(&peer_addr_);
+    }
+
+    inline uint16_t TcpConnection::GetPeerPort() const
+    {
+        return peer_port_;
+    }
+    inline bool TcpConnection::IsClosed() const
+    {
+        return closed_;
+    }
+    inline uv_tcp_t *TcpConnection::GetUVHandle() const
+    {
+        return uv_handle_;
+    }
+
+    inline size_t TcpConnection::GetSentBytes() const
+    {
+        return sent_bytes_;
+    }
+
+    inline size_t TcpConnection::GetRecvBytes() const
+    {
+        return recv_bytes_;
+    }
 
     inline void TcpConnection::OnUvRead(ssize_t nread, const uv_buf_t *buf)
     {
@@ -189,6 +325,42 @@ namespace sms
         {
             buf->len = 0;
             LOG_W << "no available space in the buffer";
+        }
+    }
+
+    inline void TcpConnection::OnUvWrite(int status, OnSendCB &&cb)
+    {
+
+        if (status == 0)
+        {
+
+            if (cb)
+            {
+                cb(true);
+            }
+        }
+        else
+        {
+            if (status == UV_EPIPE && status == UV_ENOTCONN)
+            {
+                closed_by_peer_ = true;
+            }
+            else
+            {
+                error_ = true;
+            }
+
+            LOG_E
+                << "write error, closing the connection: ",
+                uv_strerror(status);
+
+            if (cb)
+            {
+                cb(false);
+            }
+
+            Close();
+            listener_->OnTcpConnectionClosed(this);
         }
     }
 
