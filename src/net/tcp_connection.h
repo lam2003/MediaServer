@@ -49,13 +49,14 @@ namespace sms
 
     public:
         void Close();
-        virtual void Dump() const;
         int Setup(Listener *listener,
                   struct sockaddr_storage *local_addr,
                   const std::string &local_ip,
                   uint16_t local_port);
         int Start();
         void Write(const uint8_t *data, size_t len, OnSendCB &&cb);
+
+        void Dump() const;
         const struct sockaddr *GetLocalAddr() const;
         int GetLocalFamily() const;
         uint16_t GetLocalPort() const;

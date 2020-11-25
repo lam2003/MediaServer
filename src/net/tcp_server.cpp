@@ -47,7 +47,7 @@ namespace sms
     int TcpServer::Start(uv_tcp_t *handle, int backlog)
     {
         uv_handle_ = handle;
-        if (!uv_handle_)
+        if (closed_ || !uv_handle_)
         {
             return -1;
         }
@@ -86,15 +86,40 @@ namespace sms
               << "</TcpServer>" << std::endl;
     }
 
-    size_t TcpServer::OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len)
+    size_t TcpServer::GetNumConnections() const
     {
-        return len;
+        return conns_.size();
     }
 
-    void TcpServer::OnTcpConnectionClosed(TcpConnection *conn)
+    int TcpServer::GetLocalFamily() const
+    {
+        return reinterpret_cast<const sockaddr *>(&local_addr_)->sa_family;
+    }
+
+    const struct sockaddr *TcpServer::GetLocalAddr() const
+    {
+        return reinterpret_cast<const sockaddr *>(&local_addr_);
+    }
+
+    const std::string TcpServer::GetLocalIP() const
+    {
+        return local_ip_;
+    }
+
+    uint16_t TcpServer::GetLocalPort() const
+    {
+        return local_port_;
+    }
+
+        void TcpServer::OnTcpConnectionClosed(TcpConnection *conn)
     {
         conns_.erase(conn);
         delete conn;
+    }
+
+    size_t TcpServer::OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len)
+    {
+        return len;
     }
 
     void TcpServer::OnUvConnection(int status)

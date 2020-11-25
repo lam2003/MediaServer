@@ -98,18 +98,6 @@ namespace sms
         }
     }
 
-    inline void TcpConnection::Dump() const
-    {
-        LOG_I << SMS_LOG_SEPARATOR_CHAR_STD
-              << "<TcpConnection>" << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  localIp    : " << local_ip_ << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  localPort  : " << local_port_ << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  remoteIp   : " << peer_ip_ << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  remotePort : " << peer_port_ << SMS_LOG_SEPARATOR_CHAR_STD
-              << "  closed     : " << closed_ << SMS_LOG_SEPARATOR_CHAR_STD
-              << "</TcpConnection>" << std::endl;
-    }
-
     int TcpConnection::Setup(Listener *listener,
                              struct sockaddr_storage *local_addr,
                              const std::string &local_ip,
@@ -246,6 +234,18 @@ namespace sms
         {
             sent_bytes_ += pedding_len;
         }
+    }
+
+    void TcpConnection::Dump() const
+    {
+        LOG_I << SMS_LOG_SEPARATOR_CHAR_STD
+              << "<TcpConnection>" << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  localIp    : " << local_ip_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  localPort  : " << local_port_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  remoteIp   : " << peer_ip_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  remotePort : " << peer_port_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "  closed     : " << closed_ << SMS_LOG_SEPARATOR_CHAR_STD
+              << "</TcpConnection>" << std::endl;
     }
 
     const struct sockaddr *TcpConnection::GetLocalAddr() const

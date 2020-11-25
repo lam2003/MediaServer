@@ -13,9 +13,15 @@ namespace sms
         virtual ~TcpServer();
 
     public:
-        int Start(uv_tcp_t *handle, int backlog);
-        void Dump() const;
         void Close();
+        int Start(uv_tcp_t *handle, int backlog);
+
+        void Dump() const;
+        size_t GetNumConnections() const;
+        int GetLocalFamily() const;
+        const struct sockaddr *GetLocalAddr() const;
+        const std::string GetLocalIP() const;
+        uint16_t GetLocalPort() const;
 
     public:
         void OnTcpConnectionClosed(TcpConnection *conn) override;
@@ -29,7 +35,6 @@ namespace sms
         struct sockaddr_storage local_addr_;
         std::string local_ip_;
         uint16_t local_port_{0u};
-
         uv_tcp_t *uv_handle_{nullptr};
         std::unordered_set<TcpConnection *> conns_;
         bool closed_{false};
