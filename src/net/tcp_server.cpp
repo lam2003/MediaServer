@@ -1,6 +1,7 @@
 #include <net/tcp_server.h>
 #include <net/socket_utils.h>
 
+#define TCP_CONNECTION_BUF_SIZE 128 * 1024 * 1024
 namespace sms
 {
     inline static void on_connection(uv_stream_t *handle, int status)
@@ -44,7 +45,7 @@ namespace sms
         uv_close(reinterpret_cast<uv_handle_t *>(uv_handle_), static_cast<uv_close_cb>(on_close));
     }
 
-    int TcpServer::Start(uv_tcp_t *handle, int backlog)
+    int TcpServer::Start(Listener *listener, uv_tcp_t *handle, int backlog)
     {
         uv_handle_ = handle;
         if (closed_ || !uv_handle_)
@@ -71,6 +72,8 @@ namespace sms
             LOG_E << "error setting local IP and port";
             return -1;
         }
+
+        listener_ = listener;
 
         return 0;
     }
@@ -119,7 +122,7 @@ namespace sms
 
     size_t TcpServer::OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len)
     {
-        return len;
+        return listener_->OnTcpConnectionPacketReceived(conn, data, len);
     }
 
     void TcpServer::OnUvConnection(int status)
@@ -134,7 +137,7 @@ namespace sms
             return;
         }
 
-        TcpConnection *conn = new TcpConnection(128 * 1024 * 1024);
+        TcpConnection *conn = new TcpConnection(TCP_CONNECTION_BUF_SIZE);
         int ret = conn->Setup(this, &local_addr_, local_ip_, local_port_);
         if (ret != 0)
         {

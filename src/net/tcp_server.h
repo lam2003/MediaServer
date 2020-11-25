@@ -13,7 +13,7 @@ namespace sms
         {
         public:
             virtual ~Listener() {}
-            virtual size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len);
+            virtual size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len) = 0;
         };
 
     public:
@@ -22,7 +22,7 @@ namespace sms
 
     public:
         void Close();
-        int Start(uv_tcp_t *handle, int backlog);
+        int Start(Listener *listener, uv_tcp_t *handle, int backlog);
 
         void Dump() const;
         size_t GetNumConnections() const;
