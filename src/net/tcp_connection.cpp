@@ -58,50 +58,27 @@ namespace sms
         buffer_ = new uint8_t[buffer_size];
         uv_handle_ = new uv_tcp_t;
         uv_handle_->data = static_cast<void *>(this);
+
+        SetReadCB(nullptr);
+        SetClosedCB(nullptr);
     }
 
     TcpConnection::~TcpConnection()
     {
-        Close();
+        close();
         delete[] buffer_;
     }
 
     void TcpConnection::Close()
     {
-        if (closed_)
-        {
-            return;
-        }
-
-        closed_ = true;
-
-        if (uv_handle_->loop)
-        {
-            int ret = uv_read_stop(reinterpret_cast<uv_stream_t *>(uv_handle_));
-            if (ret != 0)
-            {
-                SMS_ABORT("uv_read_stop() failed: %s", uv_strerror(ret));
-            }
-
-            uv_shutdown_t *req = new uv_shutdown_t;
-            req->data = static_cast<void *>(this);
-
-            ret = uv_shutdown(req, reinterpret_cast<uv_stream_t *>(uv_handle_), static_cast<uv_shutdown_cb>(on_shutdown));
-            if (ret != 0)
-            {
-                uv_close(reinterpret_cast<uv_handle_t *>(uv_handle_), static_cast<uv_close_cb>(on_close));
-            }
-        }
-        else
-        {
-            on_close(reinterpret_cast<uv_handle_t *>(uv_handle_));
-        }
+        close();
+        closed_cb_(this);
     }
 
-    int TcpConnection::Setup(Listener *listener,
-                             struct sockaddr_storage *local_addr,
+    int TcpConnection::Setup(struct sockaddr_storage *local_addr,
                              const std::string &local_ip,
-                             uint16_t local_port)
+                             uint16_t local_port,
+                             ClosedCB &&closed_cb)
     {
         if (closed_)
         {
@@ -115,10 +92,10 @@ namespace sms
             return -1;
         }
 
-        listener_ = listener;
         local_addr_ = local_addr;
         local_ip_ = local_ip;
         local_port_ = local_port;
+        SetClosedCB(std::move(closed_cb));
 
         return 0;
     }
@@ -160,7 +137,7 @@ namespace sms
         return 0;
     }
 
-    void TcpConnection::Write(const uint8_t *data, size_t len, OnSendCB &&cb)
+    void TcpConnection::Write(const uint8_t *data, size_t len, WriteCB &&cb)
     {
         if (closed_)
         {
@@ -241,6 +218,35 @@ namespace sms
         }
     }
 
+    void TcpConnection::SetReadCB(ReadCB &&read_cb)
+    {
+        if (read_cb)
+        {
+            read_cb_ = std::move(read_cb);
+        }
+        else
+        {
+            read_cb_ = [](TcpConnection *conn, const uint8_t *data, size_t len) {
+                LOG_W << "on read callback not set! drop " << len << " bytes data";
+                return len;
+            };
+        }
+    }
+
+    void TcpConnection::SetClosedCB(ClosedCB &&closed_cb)
+    {
+        if (closed_cb)
+        {
+            closed_cb_ = std::move(closed_cb);
+        }
+        else
+        {
+            closed_cb_ = [](TcpConnection *conn) {
+                LOG_W << "on closed callback not set!";
+            };
+        }
+    }
+
     void TcpConnection::Dump() const
     {
         LOG_I << SMS_LOG_SEPARATOR_CHAR_STD
@@ -307,7 +313,6 @@ namespace sms
         }
 
         Close();
-        listener_->OnTcpConnectionClosed(this);
     }
 
     inline void TcpConnection::OnUvAlloc(size_t suggested_size, uv_buf_t *buf)
@@ -325,7 +330,7 @@ namespace sms
         }
     }
 
-    inline void TcpConnection::OnUvWrite(int status, OnSendCB &&cb)
+    inline void TcpConnection::OnUvWrite(int status, WriteCB &&cb)
     {
 
         if (status == 0)
@@ -348,7 +353,6 @@ namespace sms
             }
 
             Close();
-            listener_->OnTcpConnectionClosed(this);
         }
     }
 
@@ -378,9 +382,9 @@ namespace sms
         size_t data_len = buffer_data_len_ - read_pos_;
 
         size_t consumed = 0;
-        consumed = listener_->OnTcpConnectionPacketReceived(this,
-                                                            buffer_ + read_pos_,
-                                                            data_len);
+        consumed = read_cb_(this,
+                            buffer_ + read_pos_,
+                            data_len);
 
         if (consumed >= data_len)
         {
@@ -406,8 +410,39 @@ namespace sms
             else
             {
                 Close();
-                listener_->OnTcpConnectionClosed(this);
             }
+        }
+    }
+
+    void TcpConnection::close()
+    {
+        if (closed_)
+        {
+            return;
+        }
+
+        closed_ = true;
+
+        if (uv_handle_->loop)
+        {
+            int ret = uv_read_stop(reinterpret_cast<uv_stream_t *>(uv_handle_));
+            if (ret != 0)
+            {
+                SMS_ABORT("uv_read_stop() failed: %s", uv_strerror(ret));
+            }
+
+            uv_shutdown_t *req = new uv_shutdown_t;
+            req->data = static_cast<void *>(this);
+
+            ret = uv_shutdown(req, reinterpret_cast<uv_stream_t *>(uv_handle_), static_cast<uv_shutdown_cb>(on_shutdown));
+            if (ret != 0)
+            {
+                uv_close(reinterpret_cast<uv_handle_t *>(uv_handle_), static_cast<uv_close_cb>(on_close));
+            }
+        }
+        else
+        {
+            on_close(reinterpret_cast<uv_handle_t *>(uv_handle_));
         }
     }
 

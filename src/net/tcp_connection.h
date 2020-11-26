@@ -12,18 +12,9 @@ namespace sms
     class TcpConnection : public NonCopyable
     {
     public:
-        typedef std::function<void(bool)> OnSendCB;
-
-    public:
-        class Listener
-        {
-        public:
-            virtual ~Listener() = default;
-
-        public:
-            virtual void OnTcpConnectionClosed(TcpConnection *conn) = 0;
-            virtual size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len) = 0;
-        };
+        using WriteCB = std::function<void(bool)>;
+        using ClosedCB = std::function<void(TcpConnection *)>;
+        using ReadCB = std::function<size_t(TcpConnection *, const uint8_t *data, size_t len)>;
 
         class UvWriteData : public NonCopyable
         {
@@ -40,7 +31,7 @@ namespace sms
 
             uv_write_t req;
             uint8_t *store{nullptr};
-            TcpConnection::OnSendCB cb{nullptr};
+            TcpConnection::WriteCB cb{nullptr};
         };
 
     public:
@@ -49,12 +40,13 @@ namespace sms
 
     public:
         void Close();
-        int Setup(Listener *listener,
-                  struct sockaddr_storage *local_addr,
+        int Setup(struct sockaddr_storage *local_addr,
                   const std::string &local_ip,
-                  uint16_t local_port);
+                  uint16_t local_port, ClosedCB &&on_closed);
         int Start();
-        void Write(const uint8_t *data, size_t len, OnSendCB &&cb);
+        void Write(const uint8_t *data, size_t len, WriteCB &&cb);
+        void SetReadCB(ReadCB &&read_cb);
+        void SetClosedCB(ClosedCB &&closed_cb);
 
         void Dump() const;
         const struct sockaddr *GetLocalAddr() const;
@@ -70,11 +62,12 @@ namespace sms
     public:
         void OnUvRead(ssize_t nread, const uv_buf_t *buf);
         void OnUvAlloc(size_t suggested_size, uv_buf_t *buf);
-        void OnUvWrite(int status, OnSendCB &&cb);
+        void OnUvWrite(int status, WriteCB &&cb);
 
     private:
         bool set_peer_addr();
         void user_on_tcp_connection_read();
+        void close();
 
     private:
         size_t buffer_size_{0u};
@@ -89,11 +82,12 @@ namespace sms
         uint16_t peer_port_{0u};
         struct sockaddr_storage peer_addr_;
 
-        Listener *listener_{nullptr};
         uv_tcp_t *uv_handle_{nullptr};
         size_t recv_bytes_{0u};
         size_t sent_bytes_{0u};
 
+        ReadCB read_cb_{nullptr};
+        ClosedCB closed_cb_{nullptr};
         bool closed_{false};
     };
 

@@ -6,16 +6,11 @@
 namespace sms
 {
 
-    class TcpServer : public TcpConnection::Listener
+    class TcpServer
     {
     public:
-        class Listener
-        {
-        public:
-            virtual ~Listener() {}
-            virtual void OnTcpConnectionClosed(TcpConnection *conn) = 0;
-            virtual size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len) = 0;
-        };
+        using AcceptCB = std::function<void(TcpConnection *conn)>;
+        using ClosedCB = std::function<void(TcpConnection *conn)>;
 
     public:
         explicit TcpServer();
@@ -23,7 +18,9 @@ namespace sms
 
     public:
         void Close();
-        int Start(Listener *listener, uv_tcp_t *handle, int backlog);
+        int Start(uv_tcp_t *handle, int backlog);
+        void SetAcceptCB(AcceptCB &&accept_cb);
+        void SetClosedCB(ClosedCB &&closed_cb);
 
         void Dump() const;
         size_t GetNumConnections() const;
@@ -33,8 +30,6 @@ namespace sms
         uint16_t GetLocalPort() const;
 
     public:
-        void OnTcpConnectionClosed(TcpConnection *conn) override;
-        size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len) override;
         void OnUvConnection(int status);
 
     private:
@@ -45,8 +40,10 @@ namespace sms
         std::string local_ip_;
         uint16_t local_port_{0u};
         uv_tcp_t *uv_handle_{nullptr};
-        Listener *listener_{nullptr};
         std::unordered_set<TcpConnection *> conns_;
+
+        AcceptCB accept_cb_{nullptr};
+        ClosedCB closed_cb_{nullptr};
         bool closed_{false};
     };
 } // namespace sms

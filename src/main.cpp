@@ -8,7 +8,7 @@ using namespace sms;
 
 SignalsHandler *pg_sig_hdl;
 TcpServer *pg_server;
-class AA : public SignalsHandler::Listener, public TcpServer::Listener
+class AA : public SignalsHandler::Listener
 {
 public:
     ~AA() {}
@@ -23,6 +23,10 @@ public:
     size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len)
     {
         return len;
+    }
+
+    void OnTcpConnectionClosed(TcpConnection *conn)
+    {
     }
 };
 
@@ -44,7 +48,15 @@ int main(int argc, char **argv)
     g_sig_hdl.AddSignal(SIGTERM);
     g_sig_hdl.AddSignal(SIGINT);
 
-    g_server.Start(&a, reinterpret_cast<uv_tcp_t *>(SocketUtils::Bind(SocketUtils::SOCK_TCP, "0.0.0.0", 80)), 1024);
+    g_server.Start(reinterpret_cast<uv_tcp_t *>(SocketUtils::Bind(SocketUtils::SOCK_TCP, "0.0.0.0", 80)), 1024);
+
+    g_server.SetAcceptCB([](TcpConnection *cc) {
+        LOG_I << cc->GetPeerPort() << " connected";
+        // cc->Close();
+    });
+    g_server.SetClosedCB([](TcpConnection *cc) {
+        LOG_D << cc->GetPeerPort() << " closed";
+    });
 
     DepLibUV::RunLoop();
     DepLibUV::ClassDestroy();

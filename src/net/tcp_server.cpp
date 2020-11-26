@@ -21,6 +21,8 @@ namespace sms
 
     TcpServer::TcpServer()
     {
+        SetAcceptCB(nullptr);
+        SetClosedCB(nullptr);
     }
 
     TcpServer::~TcpServer()
@@ -45,7 +47,7 @@ namespace sms
         uv_close(reinterpret_cast<uv_handle_t *>(uv_handle_), static_cast<uv_close_cb>(on_close));
     }
 
-    int TcpServer::Start(Listener *listener, uv_tcp_t *handle, int backlog)
+    int TcpServer::Start(uv_tcp_t *handle, int backlog)
     {
         uv_handle_ = handle;
         if (closed_ || !uv_handle_)
@@ -73,9 +75,35 @@ namespace sms
             return -1;
         }
 
-        listener_ = listener;
-
         return 0;
+    }
+
+    void TcpServer::SetAcceptCB(AcceptCB &&accept_cb)
+    {
+        if (accept_cb)
+        {
+            accept_cb_ = std::move(accept_cb);
+        }
+        else
+        {
+            accept_cb_ = [](TcpConnection *) {
+                LOG_W << "on accept callback not set!";
+            };
+        }
+    }
+
+    void TcpServer::SetClosedCB(ClosedCB &&closed_cb)
+    {
+        if (closed_cb)
+        {
+            closed_cb_ = std::move(closed_cb);
+        }
+        else
+        {
+            closed_cb_ = [](TcpConnection *conn) {
+                LOG_W << "on closed callback not set!";
+            };
+        }
     }
 
     void TcpServer::Dump() const
@@ -114,18 +142,6 @@ namespace sms
         return local_port_;
     }
 
-    void TcpServer::OnTcpConnectionClosed(TcpConnection *conn)
-    {
-        listener_->OnTcpConnectionClosed(conn);
-        conns_.erase(conn);
-        delete conn;
-    }
-
-    size_t TcpServer::OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len)
-    {
-        return listener_->OnTcpConnectionPacketReceived(conn, data, len);
-    }
-
     void TcpServer::OnUvConnection(int status)
     {
         if (closed_)
@@ -139,7 +155,12 @@ namespace sms
         }
 
         TcpConnection *conn = new TcpConnection(TCP_CONNECTION_BUF_SIZE);
-        int ret = conn->Setup(this, &local_addr_, local_ip_, local_port_);
+        int ret = conn->Setup(&local_addr_, local_ip_, local_port_, [this](TcpConnection *conn) {
+            closed_cb_(conn);
+            conns_.erase(conn);
+            delete conn;
+        });
+
         if (ret != 0)
         {
             delete conn;
@@ -161,6 +182,7 @@ namespace sms
         }
 
         conns_.insert(conn);
+        accept_cb_(conn);
     }
 
     bool TcpServer::set_local_addr()
