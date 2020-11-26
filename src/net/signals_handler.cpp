@@ -19,9 +19,9 @@ namespace sms
         }
     }
 
-    SignalsHandler::SignalsHandler(Listener *listener)
+    SignalsHandler::SignalsHandler(SignalCB &&cb)
     {
-        listener_ = listener;
+        SetSignalCB(std::move(cb));
     }
 
     SignalsHandler::~SignalsHandler()
@@ -73,9 +73,23 @@ namespace sms
         return 0;
     }
 
+    void SignalsHandler::SetSignalCB(SignalCB &&cb)
+    {
+        if (cb)
+        {
+            cb_ = std::move(cb);
+        }
+        else
+        {
+            cb_ = [](SignalsHandler *handler, int signo) {
+                LOG_W << "on signal callback not set! ignore signo: " << signo;
+            };
+        }
+    }
+
     inline void SignalsHandler::OnUvSignal(int signo)
     {
-        listener_->OnSignal(this, signo);
+        cb_(this, signo);
     }
 
 } // namespace sms

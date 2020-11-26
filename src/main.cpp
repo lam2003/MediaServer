@@ -4,40 +4,11 @@
 #include <net/dep_libuv.h>
 #include <net/signals_handler.h>
 #include <net/socket_utils.h>
+
 using namespace sms;
-
-SignalsHandler *pg_sig_hdl;
-TcpServer *pg_server;
-class AA : public SignalsHandler::Listener
-{
-public:
-    ~AA() {}
-    void OnSignal(SignalsHandler *hdl, int signo)
-    {
-        if (signo == SIGTERM || signo == SIGINT)
-        {
-            pg_server->Close();
-            pg_sig_hdl->Close();
-        }
-    }
-    size_t OnTcpConnectionPacketReceived(TcpConnection *conn, const uint8_t *data, size_t len)
-    {
-        return len;
-    }
-
-    void OnTcpConnectionClosed(TcpConnection *conn)
-    {
-    }
-};
-
-AA a;
-TcpServer g_server;
-SignalsHandler g_sig_hdl(&a);
 
 int main(int argc, char **argv)
 {
-    pg_sig_hdl = &g_sig_hdl;
-    pg_server = &g_server;
     Logger::Instance().AddChannel(std::make_shared<ConsoleChannel>());
     Logger::Instance().SetWriter(
         std::make_shared<AsyncLogWriter>(Logger::Instance()));
@@ -45,16 +16,20 @@ int main(int argc, char **argv)
     DepLibUV::ClassInit();
     DepLibUV::PrintVersion();
 
+    TcpServer tcp_server;
+    SignalsHandler g_sig_hdl([&tcp_server](SignalsHandler *handler, int signo) {
+        tcp_server.Close();
+        handler->Close();
+    });
+
     g_sig_hdl.AddSignal(SIGTERM);
     g_sig_hdl.AddSignal(SIGINT);
 
-    g_server.Start(reinterpret_cast<uv_tcp_t *>(SocketUtils::Bind(SocketUtils::SOCK_TCP, "0.0.0.0", 80)), 1024);
-
-    g_server.SetAcceptCB([](TcpConnection *cc) {
+    tcp_server.Start(reinterpret_cast<uv_tcp_t *>(SocketUtils::Bind(SocketUtils::SOCK_TCP, "0.0.0.0", 80)), 1024);
+    tcp_server.SetAcceptCB([](TcpConnection *cc) {
         LOG_I << cc->GetPeerPort() << " connected";
-        // cc->Close();
     });
-    g_server.SetClosedCB([](TcpConnection *cc) {
+    tcp_server.SetClosedCB([](TcpConnection *cc) {
         LOG_D << cc->GetPeerPort() << " closed";
     });
 
