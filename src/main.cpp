@@ -4,9 +4,9 @@
 #include <net/dep_libuv.h>
 #include <net/signals_handler.h>
 #include <net/socket_utils.h>
-#include <http/parser.h>
+#include <http/http_parser.h>
 #include <common/utils.h>
-#include "http/request_splitter.h"
+#include "http/http_request_splitter.h"
 using namespace sms;
 
 int main(int argc, char **argv)

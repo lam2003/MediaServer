@@ -1,4 +1,4 @@
-#include <http/request_splitter.h>
+#include <http/http_request_splitter.h>
 
 #define SMS_HTTP_HEADER_END_LEN 4
 #define SMS_HTTP_HEADER_END "\r\n\r\n"
