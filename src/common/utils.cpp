@@ -69,4 +69,23 @@ namespace sms
         return (pthread_setname_np(pthread_self(), name.c_str()) == 0);
     }
 
+    void split_string(const std::string &str, std::vector<std::string> &vec, const std::string &trim)
+    {
+        vec.clear();
+
+        size_t prev = 0, cur = str.length();
+
+        do
+        {
+            cur = str.find(trim, prev);
+            if (cur != std::string::npos)
+            {
+                vec.emplace_back(str.substr(prev, cur - prev));
+                prev = cur + trim.length();
+            }
+        } while (cur != std::string::npos);
+
+        vec.emplace_back(str.substr(prev, cur - prev));
+    }
+
 } // namespace sms

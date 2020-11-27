@@ -55,7 +55,8 @@ namespace sms
     TcpConnection::TcpConnection(size_t buffer_size)
     {
         buffer_size_ = buffer_size;
-        buffer_ = new uint8_t[buffer_size];
+        // 预留一字节结束符
+        buffer_ = new uint8_t[buffer_size + 1];
         uv_handle_ = new uv_tcp_t;
         uv_handle_->data = static_cast<void *>(this);
 
@@ -322,6 +323,7 @@ namespace sms
         if (buffer_size_ > buffer_data_len_)
         {
             buf->len = buffer_size_ - buffer_data_len_;
+            buf->base[buf->len] = '\0';
         }
         else
         {

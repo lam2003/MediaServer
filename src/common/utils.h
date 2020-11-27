@@ -59,6 +59,8 @@ namespace sms
                              pthread_t tid = 0);
 
     bool set_thread_name(const std::string &name);
+
+    void split_string(const std::string &str, std::vector<std::string> &vec, const std::string &trim);
 } // namespace sms
 
 #endif
