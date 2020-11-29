@@ -148,7 +148,7 @@ namespace sms
         return 0;
     }
 
-    void TcpConnection::Write(const uint8_t *data, size_t len, WriteCB &&cb)
+    void TcpConnection::Write(const std::shared_ptr<Buffer> &buf, WriteCB &&cb)
     {
         if (closed_)
         {
@@ -169,7 +169,7 @@ namespace sms
             return;
         }
 
-        if (len == 0)
+        if (buf->Size())
         {
             if (cb)
             {
@@ -178,10 +178,12 @@ namespace sms
             return;
         }
 
-        uv_buf_t buffer = uv_buf_init(reinterpret_cast<char *>(const_cast<uint8_t *>(data)), len);
-        int written = uv_try_write(reinterpret_cast<uv_stream_t *>(uv_handle_), &buffer, 1);
+        uv_buf_t buffer = uv_buf_init(buf->Data(), buf->Size());
+        int written = uv_try_write(reinterpret_cast<uv_stream_t *>(uv_handle_),
+                                   &buffer,
+                                   1);
 
-        if (written == static_cast<int>(len))
+        if (written == static_cast<int>(buf->Size()))
         {
             sent_bytes_ += written;
             if (cb)
@@ -200,14 +202,10 @@ namespace sms
             written = 0;
         }
 
-        size_t pedding_len = len - written;
-        UvWriteData *write_data = new UvWriteData(pedding_len);
+        UvWriteData *write_data = new UvWriteData(buf);
 
         write_data->req.data = write_data;
-        std::memcpy(write_data->store, data + written, pedding_len);
         write_data->cb = std::move(cb);
-
-        buffer = uv_buf_init(reinterpret_cast<char *>(write_data->store), pedding_len);
 
         int ret = uv_write(&write_data->req,
                            reinterpret_cast<uv_stream_t *>(uv_handle_),
@@ -225,7 +223,88 @@ namespace sms
         }
         else
         {
-            sent_bytes_ += pedding_len;
+            sent_bytes_ += buf->Size();
+        }
+    }
+
+    void TcpConnection::Write(const std::shared_ptr<BufferList> &list, WriteCB &&cb)
+    {
+        if (closed_)
+        {
+            if (cb)
+            {
+                cb(false);
+            }
+            return;
+        }
+
+        if (!uv_handle_->loop)
+        {
+            LOG_E << "error send before setup";
+            if (cb)
+            {
+                cb(false);
+            }
+            return;
+        }
+
+        if (list->Empty())
+        {
+            if (cb)
+            {
+                cb(false);
+            }
+            return;
+        }
+
+        // uv_buf_t buffer = uv_buf_init(reinterpret_cast<char *>(const_cast<uint8_t *>(data)), len);
+        int written = uv_try_write(reinterpret_cast<uv_stream_t *>(uv_handle_),
+                                   list->GetUvBuf(),
+                                   list->GetUvBufNum());
+
+        list->ReOffset(written);
+
+        if (list->Empty())
+        {
+            sent_bytes_ += written;
+            if (cb)
+            {
+                cb(true);
+            }
+            return;
+        }
+        else if (written == UV_EAGAIN || written == UV_EBUSY)
+        {
+            written = 0;
+        }
+        else
+        {
+            LOG_W << "uv_try_write() failed: " << uv_strerror(written);
+            written = 0;
+        }
+
+        UvWriteData *write_data = new UvWriteData(list);
+
+        write_data->req.data = write_data;
+        write_data->cb = std::move(cb);
+
+        int ret = uv_write(&write_data->req,
+                           reinterpret_cast<uv_stream_t *>(uv_handle_),
+                           list->GetUvBuf(),
+                           list->GetUvBufNum(),
+                           static_cast<uv_write_cb>(on_write));
+        if (ret != 0)
+        {
+            LOG_E << "uv_write() failed: " << uv_strerror(ret);
+            if (cb)
+            {
+                cb(false);
+            }
+            delete write_data;
+        }
+        else
+        {
+            sent_bytes_ += list->GetRemainSize();
         }
     }
 

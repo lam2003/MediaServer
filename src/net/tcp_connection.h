@@ -3,8 +3,7 @@
 
 #include <common/noncopyable.h>
 #include <common/global_inc.h>
-
-#include <uv.h>
+#include <common/buffer.h>
 
 namespace sms
 {
@@ -19,18 +18,21 @@ namespace sms
         class UvWriteData : public NonCopyable
         {
         public:
-            explicit UvWriteData(size_t store_size)
+            explicit UvWriteData(const std::shared_ptr<BufferList> &list)
             {
-                this->store = new uint8_t[store_size];
+                this->list = list;
             }
 
-            ~UvWriteData()
+            explicit UvWriteData(const std::shared_ptr<Buffer> &buf)
             {
-                delete[] store;
+                this->buf = buf;
             }
+
+            ~UvWriteData() = default;
 
             uv_write_t req;
-            uint8_t *store{nullptr};
+            std::shared_ptr<BufferList> list{nullptr};
+            std::shared_ptr<Buffer> buf{nullptr};
             TcpConnection::WriteCB cb{nullptr};
         };
 
@@ -44,7 +46,8 @@ namespace sms
                   const std::string &local_ip,
                   uint16_t local_port, ClosedCB &&on_closed);
         int Start();
-        void Write(const uint8_t *data, size_t len, WriteCB &&cb);
+        void Write(const std::shared_ptr<Buffer> &buf, WriteCB &&cb);
+        void Write(const std::shared_ptr<BufferList> &list, WriteCB &&cb);
         void SetReadCB(ReadCB &&read_cb);
         void SetClosedCB(ClosedCB &&closed_cb);
 
