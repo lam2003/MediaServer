@@ -3,6 +3,7 @@
 #include <net/tcp_connection.h>
 #include <net/socket_utils.h>
 #include <net/dep_libuv.h>
+#include <net/connection_manager.h>
 #include <common/logger.h>
 
 namespace sms
@@ -25,6 +26,10 @@ namespace sms
         TcpConnection *conn = reinterpret_cast<TcpConnection *>(handle->data);
         if (conn)
         {
+            if (!ConnectionManager::Instance().IsExist(conn))
+            {
+                return;
+            }
             conn->OnUvRead(nread, buf);
         }
     }
@@ -32,11 +37,16 @@ namespace sms
     inline static void on_write(uv_write_t *req, int status)
     {
         uv_stream_t *handle = req->handle;
-        TcpConnection *conn = reinterpret_cast<TcpConnection *>(handle);
+        TcpConnection *conn = reinterpret_cast<TcpConnection *>(handle->data);
         TcpConnection::UvWriteData *write_data = reinterpret_cast<TcpConnection::UvWriteData *>(req->data);
 
         if (conn)
         {
+            if (!ConnectionManager::Instance().IsExist(conn))
+            {
+                delete write_data;
+                return;
+            }
             conn->OnUvWrite(status, std::move(write_data->cb));
         }
 
@@ -48,6 +58,10 @@ namespace sms
         TcpConnection *conn = reinterpret_cast<TcpConnection *>(handle->data);
         if (conn)
         {
+            if (!ConnectionManager::Instance().IsExist(conn))
+            {
+                return;
+            }
             conn->OnUvAlloc(suggested_size, buf);
         }
     }
@@ -62,18 +76,14 @@ namespace sms
 
         SetReadCB(nullptr);
         SetClosedCB(nullptr);
+
+        ConnectionManager::Instance().Register(this);
     }
 
     TcpConnection::~TcpConnection()
     {
-        close();
+        Close(false);
         delete[] buffer_;
-    }
-
-    void TcpConnection::Close()
-    {
-        close();
-        closed_cb_(this);
     }
 
     int TcpConnection::Setup(struct sockaddr_storage *local_addr,
@@ -186,7 +196,7 @@ namespace sms
         }
         else
         {
-            LOG_E << "uv_try_write() failed: " << uv_strerror(written);
+            LOG_W << "uv_try_write() failed: " << uv_strerror(written);
             written = 0;
         }
 
@@ -312,6 +322,14 @@ namespace sms
             user_on_tcp_connection_read();
             return;
         }
+        else if (nread == UV_EOF || nread == UV_ECONNRESET)
+        {
+            closed_by_peer_ = true;
+        }
+        else
+        {
+            error_ = true;
+        }
 
         Close();
     }
@@ -345,9 +363,17 @@ namespace sms
         }
         else
         {
+            if (status == UV_EPIPE && status == UV_ENOTCONN)
+            {
+                closed_by_peer_ = true;
+            }
+            else
+            {
+                error_ = true;
+            }
+
             LOG_E
-                << "write error, closing the connection: ",
-                uv_strerror(status);
+                << "write error, closing the connection: " << uv_strerror(status);
 
             if (cb)
             {
@@ -416,7 +442,7 @@ namespace sms
         }
     }
 
-    void TcpConnection::close()
+    void TcpConnection::Close(bool invoke_cb)
     {
         if (closed_)
         {
@@ -424,6 +450,8 @@ namespace sms
         }
 
         closed_ = true;
+
+        ConnectionManager::Instance().Remove(this);
 
         if (uv_handle_->loop)
         {
@@ -436,8 +464,15 @@ namespace sms
             uv_shutdown_t *req = new uv_shutdown_t;
             req->data = static_cast<void *>(this);
 
-            ret = uv_shutdown(req, reinterpret_cast<uv_stream_t *>(uv_handle_), static_cast<uv_shutdown_cb>(on_shutdown));
-            if (ret != 0)
+            if (!error_ && !closed_by_peer_)
+            {
+                ret = uv_shutdown(req, reinterpret_cast<uv_stream_t *>(uv_handle_), static_cast<uv_shutdown_cb>(on_shutdown));
+                if (ret != 0)
+                {
+                    uv_close(reinterpret_cast<uv_handle_t *>(uv_handle_), static_cast<uv_close_cb>(on_close));
+                }
+            }
+            else
             {
                 uv_close(reinterpret_cast<uv_handle_t *>(uv_handle_), static_cast<uv_close_cb>(on_close));
             }
@@ -445,6 +480,11 @@ namespace sms
         else
         {
             on_close(reinterpret_cast<uv_handle_t *>(uv_handle_));
+        }
+
+        if (invoke_cb)
+        {
+            closed_cb_(this);
         }
     }
 

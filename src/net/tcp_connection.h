@@ -39,7 +39,7 @@ namespace sms
         virtual ~TcpConnection();
 
     public:
-        void Close();
+        void Close(bool invoke_cb = true);
         int Setup(struct sockaddr_storage *local_addr,
                   const std::string &local_ip,
                   uint16_t local_port, ClosedCB &&on_closed);
@@ -67,7 +67,6 @@ namespace sms
     private:
         bool set_peer_addr();
         void user_on_tcp_connection_read();
-        void close();
 
     private:
         size_t buffer_size_{0u};
@@ -89,6 +88,8 @@ namespace sms
         ReadCB read_cb_{nullptr};
         ClosedCB closed_cb_{nullptr};
         bool closed_{false};
+        bool closed_by_peer_{false};
+        bool error_{false};
     };
 
 } // namespace sms
