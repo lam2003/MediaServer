@@ -183,23 +183,33 @@ namespace sms
                                    &buffer,
                                    1);
 
-        if (written == static_cast<int>(buf->Size()))
+        if (written < 0)
         {
-            sent_bytes_ += written;
-            if (cb)
+            if (written == UV_EAGAIN || written == UV_EBUSY)
             {
-                cb(true);
+                written = 0;
             }
-            return;
-        }
-        else if (written == UV_EAGAIN || written == UV_EBUSY)
-        {
-            written = 0;
+            else
+            {
+                LOG_E << "uv_try_write() failed: " << uv_strerror(written);
+                if (cb)
+                {
+                    cb(false);
+                }
+                return;
+            }
         }
         else
         {
-            LOG_W << "uv_try_write() failed: " << uv_strerror(written);
-            written = 0;
+            if (written == static_cast<int>(buf->Size()))
+            {
+                sent_bytes_ += written;
+                if (cb)
+                {
+                    cb(true);
+                }
+                return;
+            }
         }
 
         UvWriteData *write_data = new UvWriteData(buf);
@@ -262,25 +272,35 @@ namespace sms
                                    list->GetUvBuf(),
                                    list->GetUvBufNum());
 
-        list->ReOffset(written);
-
-        if (list->Empty())
+        if (written < 0)
         {
-            sent_bytes_ += written;
-            if (cb)
+            if (written == UV_EAGAIN || written == UV_EBUSY)
             {
-                cb(true);
+                written = 0;
             }
-            return;
-        }
-        else if (written == UV_EAGAIN || written == UV_EBUSY)
-        {
-            written = 0;
+            else
+            {
+                LOG_E << "uv_try_write() failed: " << uv_strerror(written);
+                if (cb)
+                {
+                    cb(false);
+                }
+                return;
+            }
         }
         else
         {
-            LOG_W << "uv_try_write() failed: " << uv_strerror(written);
-            written = 0;
+            list->ReOffset(written);
+            sent_bytes_ += written;
+
+            if (list->Empty())
+            {
+                if (cb)
+                {
+                    cb(true);
+                }
+                return;
+            }
         }
 
         UvWriteData *write_data = new UvWriteData(list);
