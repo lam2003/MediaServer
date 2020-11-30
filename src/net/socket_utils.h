@@ -2,7 +2,6 @@
 #define SMS_SOCKET_UTILS_H
 
 #include <common/global_inc.h>
-#include <common/logger.h>
 
 #include <uv.h>
 

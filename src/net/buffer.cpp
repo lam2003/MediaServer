@@ -1,4 +1,4 @@
-#include <common/buffer.h>
+#include <net/buffer.h>
 
 namespace sms
 {
@@ -27,7 +27,7 @@ namespace sms
         {
             return;
         }
-        
+
         remain_size_ -= n;
         int offset = 0;
         int last_off = buf_off_;

@@ -1,7 +1,8 @@
 #include <net/tcp_server.h>
 #include <net/socket_utils.h>
+#include <common/logger.h>
 
-#define TCP_CONNECTION_BUF_SIZE 128 * 1024 * 1024
+#define SMS_TCP_CONNECTION_BUF_SIZE 128 * 1024 * 1024
 
 namespace sms
 {
@@ -155,7 +156,7 @@ namespace sms
             return;
         }
 
-        TcpConnection *conn = new TcpConnection(TCP_CONNECTION_BUF_SIZE);
+        TcpConnection *conn = new TcpConnection(SMS_TCP_CONNECTION_BUF_SIZE);
         int ret = conn->Setup(&local_addr_, local_ip_, local_port_, [this](TcpConnection *conn) {
             closed_cb_(conn);
             conns_.erase(conn);

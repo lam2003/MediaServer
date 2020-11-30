@@ -3,7 +3,6 @@
 
 #include <thread/semaphore.h>
 #include <common/noncopyable.h>
-#include <common/global_inc.h>
 
 namespace sms
 {
@@ -207,7 +206,7 @@ namespace sms
 #define SMS_LOG_STR "%s:%d"
 #define SMS_LOG_SEPARATOR_CHAR_STD "\n"
 #define SMS_LOG_STR_DESC SMS_LOG_STR " | "
-#define SMS_LOG_ARG __FILE__,__LINE__
+#define SMS_LOG_ARG __FILE__, __LINE__
 #define SMS_ABORT(desc, ...)                                                                                           \
     do                                                                                                                 \
     {                                                                                                                  \

@@ -1,9 +1,7 @@
 #ifndef TCP_CONNECTION_H
 #define TCP_CONNECTION_H
 
-#include <common/noncopyable.h>
-#include <common/global_inc.h>
-#include <common/buffer.h>
+#include <net/buffer.h>
 
 namespace sms
 {

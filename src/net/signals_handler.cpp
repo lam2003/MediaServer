@@ -1,5 +1,5 @@
 #include <net/signals_handler.h>
-#include <net/dep_libuv.h>
+#include <dep/dep_libuv.h>
 #include <common/logger.h>
 
 namespace sms

@@ -1,7 +1,7 @@
 #include <common/logger.h>
 #include <net/tcp_connection.h>
 #include <net/tcp_server.h>
-#include <net/dep_libuv.h>
+#include <dep/dep_libuv.h>
 #include <net/signals_handler.h>
 #include <net/socket_utils.h>
 #include <http/http_parser.h>
