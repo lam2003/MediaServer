@@ -11,16 +11,22 @@ namespace sms
     class Buffer : public NonCopyable
     {
     public:
-        Buffer() {}
-        virtual ~Buffer() {}
+        Buffer() = default;
 
-        virtual char *Data() const = 0;
-        virtual uint32_t Size() const = 0;
+        virtual ~Buffer() = default;
+
+    public:
+        virtual uint8_t *Data() const = 0;
+
+        virtual size_t Size() const = 0;
+
         virtual std::string ToString() const
         {
-            return std::string(Data(), Size());
+            return std::string(reinterpret_cast<const char *>(Data()),
+                               Size());
         }
-        virtual uint32_t Capacity() const
+
+        virtual size_t Capacity() const
         {
             return Size();
         }
@@ -45,22 +51,23 @@ namespace sms
         }
 
     public:
-        char *Data() const override
+        uint8_t *Data() const override
         {
             return data_;
         }
-        uint32_t Size() const override
+
+        size_t Size() const override
         {
             return size_;
         }
 
-        uint32_t Capacity() const override
+        size_t Capacity() const override
         {
             return capacity_;
         }
 
     public:
-        void SetCapacity(uint32_t capacity)
+        void SetCapacity(size_t capacity)
         {
             if (data_)
             {
@@ -89,11 +96,11 @@ namespace sms
 
                 delete[] data_;
             }
-            data_ = new char[capacity];
+            data_ = new uint8_t[capacity];
             capacity_ = capacity;
         }
 
-        void SetSize(uint32_t size)
+        void SetSize(size_t size)
         {
             if (size > capacity_)
             {
@@ -102,7 +109,7 @@ namespace sms
             size_ = size;
         }
 
-        void Assign(const char *data, uint32_t size = 0)
+        void Assign(const char *data, size_t size = 0)
         {
             if (size <= 0)
             {
@@ -117,9 +124,9 @@ namespace sms
         }
 
     private:
-        char *data_ = nullptr;
-        uint32_t capacity_ = 0;
-        uint32_t size_ = 0;
+        uint8_t *data_{nullptr};
+        size_t capacity_{0};
+        size_t size_{0};
     };
 
     class BufferList : public NonCopyable

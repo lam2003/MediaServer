@@ -70,8 +70,7 @@ namespace sms
         void user_on_tcp_connection_read();
 
     private:
-        size_t buffer_size_{0u};
-        uint8_t *buffer_{nullptr};
+        BufferRaw buffer_;
         size_t buffer_data_len_{0u};
         size_t read_pos_{0u};
 

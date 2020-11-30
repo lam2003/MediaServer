@@ -12,7 +12,7 @@ namespace sms
         int i = 0;
         for (const std::shared_ptr<Buffer> &ptr : pkt_list_)
         {
-            buf_[i].base = ptr->Data();
+            buf_[i].base = reinterpret_cast<char *>(ptr->Data());
             buf_[i].len = ptr->Size();
             remain_size_ += ptr->Size();
             ++i;

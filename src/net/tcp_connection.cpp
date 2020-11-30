@@ -68,9 +68,7 @@ namespace sms
 
     TcpConnection::TcpConnection(size_t buffer_size)
     {
-        buffer_size_ = buffer_size;
-        // 预留一字节结束符
-        buffer_ = new uint8_t[buffer_size + 1];
+        buffer_.SetCapacity(buffer_size + 1);
         uv_handle_ = new uv_tcp_t;
         uv_handle_->data = static_cast<void *>(this);
 
@@ -83,7 +81,6 @@ namespace sms
     TcpConnection::~TcpConnection()
     {
         Close(false);
-        delete[] buffer_;
     }
 
     int TcpConnection::Setup(struct sockaddr_storage *local_addr,
@@ -178,7 +175,7 @@ namespace sms
             return;
         }
 
-        uv_buf_t buffer = uv_buf_init(buf->Data(), buf->Size());
+        uv_buf_t buffer = uv_buf_init(reinterpret_cast<char *>(buf->Data()), buf->Size());
         int written = uv_try_write(reinterpret_cast<uv_stream_t *>(uv_handle_),
                                    &buffer,
                                    1);
@@ -434,11 +431,11 @@ namespace sms
 
     inline void TcpConnection::OnUvAlloc(size_t suggested_size, uv_buf_t *buf)
     {
-        buf->base = reinterpret_cast<char *>(buffer_ + buffer_data_len_);
+        buf->base = reinterpret_cast<char *>(buffer_.Data() + buffer_data_len_);
 
-        if (buffer_size_ > buffer_data_len_)
+        if (buffer_.Capacity() > buffer_data_len_)
         {
-            buf->len = buffer_size_ - buffer_data_len_;
+            buf->len = buffer_.Capacity() - buffer_data_len_;
             buf->base[buf->len] = '\0';
         }
         else
@@ -509,7 +506,7 @@ namespace sms
 
         size_t consumed = 0;
         consumed = read_cb_(this,
-                            buffer_ + read_pos_,
+                            reinterpret_cast<const uint8_t *>(buffer_.Data() + read_pos_),
                             data_len);
 
         if (consumed >= data_len)
@@ -524,13 +521,13 @@ namespace sms
         }
 
         // 检查缓存是否满了
-        if (buffer_data_len_ == buffer_size_)
+        if (buffer_data_len_ == buffer_.Capacity())
         {
             if (read_pos_ != 0)
             {
                 std::memmove(
-                    buffer_, buffer_ + read_pos_, buffer_data_len_ - read_pos_);
-                buffer_data_len_ = buffer_size_ - read_pos_;
+                    buffer_.Data(), buffer_.Data() + read_pos_, buffer_data_len_ - read_pos_);
+                buffer_data_len_ = buffer_.Capacity() - read_pos_;
                 read_pos_ = 0;
             }
             else
