@@ -267,7 +267,6 @@ namespace sms
             return;
         }
 
-        // uv_buf_t buffer = uv_buf_init(reinterpret_cast<char *>(const_cast<uint8_t *>(data)), len);
         int written = uv_try_write(reinterpret_cast<uv_stream_t *>(uv_handle_),
                                    list->GetUvBuf(),
                                    list->GetUvBufNum());
