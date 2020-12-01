@@ -36,6 +36,12 @@ namespace sms
         send_rtsp_response("200 OK", {"Public", "OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, ANNOUNCE, RECORD, SET_PARAMETER, GET_PARAMETER"});
     }
 
+    void RtspSession::handle_announce(const HttpParser &parser)
+    {
+        // send_rtsp_response("200 OK", {"Public", "OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, ANNOUNCE, RECORD, SET_PARAMETER, GET_PARAMETER"});
+        
+    }
+
     static std::string rtsp_date_str()
     {
         char buf[64];
@@ -119,7 +125,7 @@ namespace sms
         TcpSession::send(buf);
     }
 
-    void RtspSession::on_whole_rtsp_packet(const HttpParser &parser)
+    void RtspSession::on_whole_rtsp_packet(HttpParser &parser)
     {
         std::string method = parser.Method();
         cseq_ = atoi(parser["CSeq"].data());
@@ -155,6 +161,8 @@ namespace sms
             LOG_E << "handle method: " << method << " failed: " << e.what();
             shutdown();
         }
+
+        parser.Clear();
     }
 
 } // namespace sms

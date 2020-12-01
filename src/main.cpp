@@ -6,7 +6,7 @@
 #include <net/socket_utils.h>
 #include <http/http_parser.h>
 #include <common/utils.h>
-#include "common/media_source.h"
+#include "media/media_source.h"
 #include "rtsp/rtsp_session.h"
 #include "http/http_request_splitter.h"
 using namespace sms;
@@ -53,11 +53,13 @@ int main(int argc, char **argv)
         // ll.push_back(buf);
         // ll.push_back(buf);
         // LOG_I << cc->GetPeerPort() << " connected";
-        cc->SetReadCB([](TcpConnection *cc, const uint8_t *data, size_t len) {
+
+                RtspSession *ss = new RtspSession(cc);
+        cc->SetReadCB([ss](TcpConnection *cc, const uint8_t *data, size_t len) {
             // cc->Close();
-            LOG_E << "################################## " << std::string(reinterpret_cast<const char *>(data), len);
-            RtspSession session(cc);
-           return  session.OnRecv(data,len);
+            // LOG_E << "################################## " << std::string(reinterpret_cast<const char *>(data), len);
+    
+           return  ss->OnRecv(data,len);
             // session
             // HttpParser parser;
 

@@ -22,10 +22,11 @@ namespace sms
         void send(const std::shared_ptr<Buffer> &buf) override;
 
         // override RtspSplitter
-        void on_whole_rtsp_packet(const HttpParser &parser) override;
+        void on_whole_rtsp_packet(HttpParser &parser) override;
 
     private:
         void handle_options(const HttpParser &parser);
+        void handle_announce(const HttpParser &parser);
 
         void send_rtsp_response(const std::string &res_code,
                                 const std::initializer_list<std::string> &header,

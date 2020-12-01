@@ -84,6 +84,11 @@ namespace sms
         return full_url_;
     }
 
+    void HttpParser::SetContent(const std::string content)
+    {
+        content_ = content;
+    }
+
     StrCaseMap HttpParser::ParseArgs(const std::string &str, const char *pair_delim, const char *key_delim)
     {
         StrCaseMap params;

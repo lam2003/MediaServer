@@ -1,6 +1,7 @@
 #include <rtsp/rtsp_splitter.h>
 #include <rtsp/rtsp_session.h>
 #include <common/config.h>
+#include <common/logger.h>
 
 namespace sms
 {
@@ -33,6 +34,9 @@ namespace sms
             return 0;
         }
 
+        std::string str(reinterpret_cast<const char *>(data), len);
+        LOG_I << "################ header: " << str;
+
         parser_.Process(std::string(reinterpret_cast<const char *>(data), len));
 
         int content_len = atoi(parser_["Content-Length"].data());
@@ -41,6 +45,15 @@ namespace sms
             on_whole_rtsp_packet(parser_);
         }
         return content_len;
+    }
+
+    void RtspSplitter::on_recv_content(const uint8_t *data, size_t len)
+    {
+        std::string str(reinterpret_cast<const char *>(data), len);
+        LOG_I << "################ content: " << str;
+
+        parser_.SetContent(std::string(reinterpret_cast<const char *>(data), len));
+        on_whole_rtsp_packet(parser_);
     }
 
 } // namespace sms

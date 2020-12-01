@@ -68,6 +68,8 @@ namespace sms
 
         const std::string &FullUrl() const;
 
+        void SetContent(const std::string content);
+
         static StrCaseMap ParseArgs(const std::string &str, const char *pair_delim = "&", const char *key_delim = "=");
 
     private:
@@ -86,6 +88,7 @@ namespace sms
         StrCaseMap headers_;
         StrCaseMap url_args_;
         std::string null_;
+        std::string content_;
     };
 
 } // namespace sms
