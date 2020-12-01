@@ -7,15 +7,22 @@ namespace sms
     class RtspSession : public RtspSplitter, public TcpSession
     {
     public:
-        RtspSession(TcpConnection *conn) : TcpSession(conn) {}
-
-        ~RtspSession() = default;
+        RtspSession(TcpConnection *conn);
+        ~RtspSession();
 
     public:
-        size_t OnRecv(const uint8_t *data, size_t len)
-        {
-            return Input(data, len);
-        }
+        // override TcpSession
+        void OnError(const SockException &err) override;
+        size_t OnRecv(const uint8_t *data, size_t len) override;
+        void OnManage() override;
+
+    protected:
+        // override TcpSession
+        void send(const std::shared_ptr<BufferList> &list) override;
+        void send(const std::shared_ptr<Buffer> &buf) override;
+
+        // override RtspSplitter
+        void on_whole_rtsp_packet(const HttpParser &parser) override;
 
     private:
         void handle_options(const HttpParser &parser);
@@ -29,15 +36,6 @@ namespace sms
                                 const StrCaseMap &header = StrCaseMap(),
                                 const std::string &sdp = "",
                                 const char *protocol = "RTSP/1.0");
-
-    protected:
-        // override TcpSession
-        void send(const std::shared_ptr<BufferList> &list) override;
-
-        void send(const std::shared_ptr<Buffer> &buf) override;
-
-        // override RtspSplitter
-        void on_whole_rtsp_packet(const HttpParser &parser) override;
 
     private:
         size_t bytes_usage_{0};

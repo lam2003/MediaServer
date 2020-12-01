@@ -74,6 +74,7 @@ namespace sms
 
         SetReadCB(nullptr);
         SetClosedCB(nullptr);
+        SetErrorCB(nullptr);
 
         ConnectionManager::Instance().Register(this);
     }
@@ -353,6 +354,20 @@ namespace sms
         }
     }
 
+    void TcpConnection::SetErrorCB(ErrorCB &&error_cb)
+    {
+        if (error_cb)
+        {
+            error_cb_ = std::move(error_cb);
+        }
+        else
+        {
+            error_cb_ = [](const SockException &err) {
+                LOG_E << "on error callback not set: " << err.what();
+            };
+        }
+    }
+
     void TcpConnection::Dump() const
     {
         LOG_I << SMS_LOG_SEPARATOR_CHAR_STD
@@ -426,6 +441,7 @@ namespace sms
             error_ = true;
         }
 
+        error_cb_(SockException(uv_strerror(nread), nread));
         Close();
     }
 
@@ -467,14 +483,12 @@ namespace sms
                 error_ = true;
             }
 
-            LOG_E
-                << "write error, closing the connection: " << uv_strerror(status);
-
             if (cb)
             {
                 cb(false);
             }
 
+            error_cb_(SockException(uv_strerror(status), status));
             Close();
         }
     }
@@ -532,6 +546,7 @@ namespace sms
             }
             else
             {
+                error_cb_(SockException("recv buffer overflow", UV_EAI_OVERFLOW));
                 Close();
             }
         }

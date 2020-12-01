@@ -6,6 +6,8 @@
 #include <net/socket_utils.h>
 #include <http/http_parser.h>
 #include <common/utils.h>
+#include "common/media_source.h"
+#include "rtsp/rtsp_session.h"
 #include "http/http_request_splitter.h"
 using namespace sms;
 
@@ -37,35 +39,39 @@ int main(int argc, char **argv)
     char buff[2 * 1024 * 1024] = {1};
     std::shared_ptr<BufferRaw> buf = std::make_shared<BufferRaw>();
 
+    MediaInfo info;
+    info.Process("rtsp://linmin.xyz:443/live/1/test?fuck=true&haha=9&vhost=fuck.com");
+    // LOG_D<<info.schema_<<" "<<info.app_ << " "<<info.stream_id_<<" "<< info.param_strs_ <<" "<<info.vhost_;
+
     buf->Assign(buff, 2 * 1024 * 1024);
     tcp_server.Start(reinterpret_cast<uv_tcp_t *>(SocketUtils::Bind(SocketUtils::SOCK_TCP, "0.0.0.0", 80)), 1024);
     tcp_server.SetAcceptCB([buf](TcpConnection *cc) {
-        std::list<std::shared_ptr<Buffer>> ll;
-        ll.push_back(buf);
-        ll.push_back(buf);
-        ll.push_back(buf);
-        ll.push_back(buf);
-        ll.push_back(buf);
+        // std::list<std::shared_ptr<Buffer>> ll;
+        // ll.push_back(buf);
+        // ll.push_back(buf);
+        // ll.push_back(buf);
+        // ll.push_back(buf);
+        // ll.push_back(buf);
         // LOG_I << cc->GetPeerPort() << " connected";
         cc->SetReadCB([](TcpConnection *cc, const uint8_t *data, size_t len) {
             // cc->Close();
-            // HttpRequestSplitter ss;
+            LOG_E << "################################## " << std::string(reinterpret_cast<const char *>(data), len);
+            RtspSession session(cc);
+           return  session.OnRecv(data,len);
+            // session
             // HttpParser parser;
 
             // ss.Input(data, len);
-            cc->Close();
-            return len;
+            // cc->Close();
             // parser.Process(std::string(reinterpret_cast<const char *>(data), len));
             // std::string str(reinterpret_cast<const char *>(data), len);
             // LOG_D << str;
             // return len;
         });
 
-        cc->Write(std::make_shared<BufferList>(ll), [cc](bool v) {
-            LOG_E << "####################################### 1 " << v << "   " << cc->GetPeerPort();
-        });
-
-  
+        // cc->Write(std::make_shared<BufferList>(ll), [cc](bool v) {
+        //     LOG_E << "####################################### 1 " << v << "   " << cc->GetPeerPort();
+        // });
     });
     tcp_server.SetClosedCB([](TcpConnection *cc) {
         LOG_D << cc->GetPeerPort() << " closed";

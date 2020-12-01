@@ -2,6 +2,7 @@
 #define TCP_CONNECTION_H
 
 #include <net/buffer.h>
+#include <net/socket_exception.h>
 
 namespace sms
 {
@@ -12,6 +13,7 @@ namespace sms
         using WriteCB = std::function<void(bool)>;
         using ClosedCB = std::function<void(TcpConnection *)>;
         using ReadCB = std::function<size_t(TcpConnection *, const uint8_t *data, size_t len)>;
+        using ErrorCB = std::function<void(const SockException &)>;
 
         class UvWriteData : public NonCopyable
         {
@@ -48,6 +50,7 @@ namespace sms
         void Write(const std::shared_ptr<BufferList> &list, WriteCB &&cb);
         void SetReadCB(ReadCB &&read_cb);
         void SetClosedCB(ClosedCB &&closed_cb);
+        void SetErrorCB(ErrorCB &&error_cb);
 
         void Dump() const;
         const struct sockaddr *GetLocalAddr() const;
@@ -87,6 +90,7 @@ namespace sms
 
         ReadCB read_cb_{nullptr};
         ClosedCB closed_cb_{nullptr};
+        ErrorCB error_cb_{nullptr};
         bool closed_{false};
         bool closed_by_peer_{false};
         bool error_{false};

@@ -6,6 +6,30 @@
 
 namespace sms
 {
+    RtspSession::RtspSession(TcpConnection *conn) : TcpSession(conn)
+    {
+    }
+
+    RtspSession::~RtspSession()
+    {
+    }
+
+    void RtspSession::OnError(const SockException &err)
+    {
+    }
+
+    size_t RtspSession::OnRecv(const uint8_t *data, size_t len)
+    {
+        // invoke HttpRequestSplitter::Input()
+        size_t consumed = Input(data, len);
+        bytes_usage_ += consumed;
+
+        return consumed;
+    }
+
+    void RtspSession::OnManage()
+    {
+    }
 
     void RtspSession::handle_options(const HttpParser &parser)
     {
