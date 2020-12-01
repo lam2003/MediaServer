@@ -88,4 +88,24 @@ namespace sms
         vec.emplace_back(str.substr(prev, cur - prev));
     }
 
+    std::string &trim(std::string &s, const std::string &chars)
+    {
+        std::string map(0xFF, '\0');
+        for (const char &ch : chars)
+        {
+            map[static_cast<const uint8_t &>(ch)] = '\1';
+        }
+
+        while (s.size() && map.at(static_cast<const uint8_t &>(s.back())))
+        {
+            s.pop_back();
+        }
+        while (s.size() && map.at(static_cast<const uint8_t &>(s.front())))
+        {
+            s.erase(0, 1);
+        }
+
+        return s;
+    }
+
 } // namespace sms

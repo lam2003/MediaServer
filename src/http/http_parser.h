@@ -60,20 +60,32 @@ namespace sms
         void Process(const std::string &str);
         void Clear();
 
+        const std::string &operator[](const char *name) const;
+
+        const std::string &Method() const;
+
+        const std::string &Url() const;
+
+        const std::string &FullUrl() const;
+
+        static StrCaseMap ParseArgs(const std::string &str, const char *pair_delim = "&", const char *key_delim = "=");
+
     private:
-        std::string find_field(const char *data,
-                               size_t len,
-                               const char *start,
-                               const char *end);
+        static std::string find_field(const char *data,
+                                      size_t len,
+                                      const char *start,
+                                      const char *end);
         void parse_args(const std::string &str);
 
     private:
         std::string method_;
         std::string url_;
+        std::string tail_;
         std::string full_url_;
         std::string params_;
         StrCaseMap headers_;
         StrCaseMap url_args_;
+        std::string null_;
     };
 
 } // namespace sms

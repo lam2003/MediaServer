@@ -32,6 +32,63 @@ namespace sms
         }
     };
 
+    class BufferString final : public Buffer
+    {
+    public:
+        BufferString(const std::string &data, size_t offset = 0, size_t len = 0)
+        {
+            data_ = data;
+            offset_ = offset;
+            size_ = len;
+            setup();
+        }
+
+        BufferString(std::string &&data, size_t offset = 0, size_t len = 0)
+        {
+            data_ = std::move(data);
+            offset_ = offset;
+            size_ = len;
+            setup();
+        }
+
+        uint8_t *Data() const override
+        {
+            return const_cast<uint8_t *>((reinterpret_cast<const uint8_t *>(data_.data() + offset_)));
+        }
+
+        size_t Size() const override
+        {
+            return size_;
+        }
+
+        std::string ToString() const override
+        {
+            return std::string(reinterpret_cast<const char *>(Data()), Size());
+        }
+
+    private:
+        void setup()
+        {
+            if (offset_ > data_.size())
+            {
+                offset_ = data_.size();
+            }
+            if (size_ == 0)
+            {
+                size_ = data_.size();
+            }
+            if (size_ + offset_ > data_.size())
+            {
+                size_ = data_.size() - offset_;
+            }
+        }
+
+    private:
+        std::string data_;
+        size_t offset_{0};
+        size_t size_{0};
+    };
+
     class BufferRaw final : public Buffer
     {
     public:

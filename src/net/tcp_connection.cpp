@@ -166,7 +166,7 @@ namespace sms
             return;
         }
 
-        if (buf->Size())
+        if (!buf->Size())
         {
             if (cb)
             {

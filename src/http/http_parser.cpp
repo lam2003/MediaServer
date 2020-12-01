@@ -1,16 +1,15 @@
 #include <http/http_parser.h>
 #include <common/logger.h>
 #include <common/utils.h>
+#include <common/config.h>
 
-#define SMS_HTTP_CRLF_CHAR_LEN 2
-#define SMS_HTTP_CRLF_CHAR "\r\n"
-#define SMS_HTTP_SPACE_CHAR " "
-#define SMS_HTTP_SEPARATOR_CHAR ": "
 #define SMS_HTTP_GET_LINE(s, l) find_field((s), (l), nullptr, SMS_HTTP_CRLF_CHAR)
 #define SMS_HTTP_GET_METHOD(s, l) find_field((s), (l), nullptr, SMS_HTTP_SPACE_CHAR)
 #define SMS_HTTP_GET_FULLURL(s, l) find_field((s), (l), SMS_HTTP_SPACE_CHAR, SMS_HTTP_SPACE_CHAR)
+#define SMS_HTTP_GET_TAIL(s, l, fu) find_field((s), (l), (fu + SMS_HTTP_SPACE_CHAR).data(), nullptr)
 #define SMS_HTTP_GET_KEY(s, l) find_field((s), (l), nullptr, SMS_HTTP_SEPARATOR_CHAR)
 #define SMS_HTTP_GET_VAL(s, l) find_field((s), (l), SMS_HTTP_SEPARATOR_CHAR, nullptr)
+
 namespace sms
 {
 
@@ -40,6 +39,7 @@ namespace sms
                 method_ = SMS_HTTP_GET_METHOD(line.c_str(), line.length());
                 full_url_ = SMS_HTTP_GET_FULLURL(line.c_str(), line.length());
                 parse_args(full_url_);
+                tail_ = SMS_HTTP_GET_TAIL(line.c_str(), line.length(), full_url_);
             }
             else
             {
@@ -57,6 +57,48 @@ namespace sms
         params_.clear();
         headers_.clear();
         url_args_.clear();
+    }
+
+    const std::string &HttpParser::operator[](const char *name) const
+    {
+        auto it = headers_.find(name);
+        if (it == headers_.end())
+        {
+            return null_;
+        }
+        return it->second;
+    }
+
+    const std::string &HttpParser::Method() const
+    {
+        return method_;
+    }
+
+    const std::string &HttpParser::Url() const
+    {
+        return url_;
+    }
+
+    const std::string &HttpParser::FullUrl() const
+    {
+        return full_url_;
+    }
+
+    StrCaseMap HttpParser::ParseArgs(const std::string &str, const char *pair_delim, const char *key_delim)
+    {
+        StrCaseMap params;
+
+        std::vector<std::string> split_vec;
+        split_string(str, split_vec, pair_delim);
+
+        for (const std::string &key_val : split_vec)
+        {
+            std::string key = find_field(key_val.c_str(), key_val.length(), nullptr, key_delim);
+            std::string val = find_field(key_val.c_str(), key_val.length(), key_delim, nullptr);
+            params.emplace_force(trim(key), trim(val));
+        }
+
+        return params;
     }
 
     std::string HttpParser::find_field(const char *data,

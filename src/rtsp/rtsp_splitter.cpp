@@ -1,6 +1,6 @@
 #include <rtsp/rtsp_splitter.h>
-
-#define SMS_RTSP_RTP_BEGIN_CHAR '$'
+#include <rtsp/rtsp_session.h>
+#include <common/config.h>
 
 namespace sms
 {
@@ -16,6 +16,7 @@ namespace sms
         {
             // is rtp packet
             is_rtp_packet_ = true;
+            return nullptr;
         }
         else
         {
@@ -31,10 +32,15 @@ namespace sms
         {
             return 0;
         }
-        else
+
+        parser_.Process(std::string(reinterpret_cast<const char *>(data), len));
+
+        int content_len = atoi(parser_["Content-Length"].data());
+        if (!content_len)
         {
-            
+            on_whole_rtsp_packet(parser_);
         }
+        return content_len;
     }
 
 } // namespace sms

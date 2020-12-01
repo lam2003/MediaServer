@@ -61,6 +61,8 @@ namespace sms
     bool set_thread_name(const std::string &name);
 
     void split_string(const std::string &str, std::vector<std::string> &vec, const std::string &trim);
+
+    std::string &trim(std::string &s, const std::string &chars = "\r\n\t");
 } // namespace sms
 
 #endif

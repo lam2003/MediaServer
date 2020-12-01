@@ -43,10 +43,4 @@ namespace sms
         return reinterpret_cast<uint8_t *>(pos + SMS_HTTP_HEADER_END_LEN);
     }
 
-    size_t HttpRequestSplitter::on_recv_header(const uint8_t *data, size_t len)
-    {
-        parser_.Process(std::string(reinterpret_cast<const char *>(data), len));
-        return 0;
-    }
-
 } // namespace sms
