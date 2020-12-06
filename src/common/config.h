@@ -16,5 +16,4 @@
 #define SMS_HTTP_SEPARATOR_CHAR ": "
 #define SMS_HTTP_HEADER_END_LEN 4
 #define SMS_HTTP_HEADER_END "\r\n\r\n"
-
 #endif

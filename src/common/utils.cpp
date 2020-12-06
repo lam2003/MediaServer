@@ -88,7 +88,7 @@ namespace sms
         vec.emplace_back(str.substr(prev, cur - prev));
     }
 
-    std::string &trim(std::string &s, const std::string &chars)
+    std::string &trim(std::string &str, const std::string &chars)
     {
         std::string map(0xFF, '\0');
         for (const char &ch : chars)
@@ -96,16 +96,21 @@ namespace sms
             map[static_cast<const uint8_t &>(ch)] = '\1';
         }
 
-        while (s.size() && map.at(static_cast<const uint8_t &>(s.back())))
+        while (str.size() && map.at(static_cast<const uint8_t &>(str.back())))
         {
-            s.pop_back();
+            str.pop_back();
         }
-        while (s.size() && map.at(static_cast<const uint8_t &>(s.front())))
+        while (str.size() && map.at(static_cast<const uint8_t &>(str.front())))
         {
-            s.erase(0, 1);
+            str.erase(0, 1);
         }
 
-        return s;
+        return str;
+    }
+
+    void to_lower_case(std::string &str)
+    {
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
     }
 
 } // namespace sms

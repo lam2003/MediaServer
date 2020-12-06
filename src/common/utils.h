@@ -62,7 +62,10 @@ namespace sms
 
     void split_string(const std::string &str, std::vector<std::string> &vec, const std::string &trim);
 
-    std::string &trim(std::string &s, const std::string &chars = "\r\n\t");
+    std::string &trim(std::string &str, const std::string &chars = "\r\n\t");
+
+    void to_lower_case(std::string &str);
+
 } // namespace sms
 
 #endif
