@@ -89,15 +89,9 @@ namespace sms
                 auto it = string2tsptype.find(str);
                 if (it == string2tsptype.end())
                 {
-                    continue;
+                    return false;
                 }
-
                 transport_vec.emplace_back(it->second);
-            }
-
-            if (transport_vec.empty())
-            {
-                return false;
             }
         }
 
