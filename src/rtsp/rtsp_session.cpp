@@ -3,6 +3,7 @@
 #include <common/config.h>
 #include <common/once_token.h>
 #include <common/logger.h>
+#include <media/sdp_parser.h>
 
 namespace sms
 {
@@ -38,8 +39,9 @@ namespace sms
 
     void RtspSession::handle_announce(const HttpParser &parser)
     {
+        SdpParser p;
+        p.Process(parser.Content());
         // send_rtsp_response("200 OK", {"Public", "OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, ANNOUNCE, RECORD, SET_PARAMETER, GET_PARAMETER"});
-        
     }
 
     static std::string rtsp_date_str()
@@ -141,6 +143,7 @@ namespace sms
         static std::unordered_map<std::string, rtsp_request_handler> s_cmd_functions;
         static OnceToken token([]() {
             s_cmd_functions.emplace("OPTIONS", &RtspSession::handle_options);
+            s_cmd_functions.emplace("ANNOUNCE", &RtspSession::handle_announce);
         });
 
         auto it = s_cmd_functions.find(method);

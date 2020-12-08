@@ -70,6 +70,8 @@ namespace sms
 
         void SetContent(const std::string content);
 
+        const std::string &Content() const;
+
         static StrCaseMap ParseArgs(const std::string &str, const char *pair_delim = "&", const char *key_delim = "=");
 
     private:

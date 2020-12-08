@@ -6,111 +6,171 @@
 namespace sms
 {
 
-    std::unordered_map<std::string, SdpMediaLine::Type> SdpMediaLine::string2type = {
-        {"video", SdpMediaLine::Type::VIDEO},
-        {"audio", SdpMediaLine::Type::AUDIO},
+    std::unordered_map<std::string, TrackType> SdpMediaLine::string2type = {
+        {"video", TrackType::VIDEO},
+        {"audio", TrackType::AUDIO},
     };
 
-    std::map<SdpMediaLine::Type, std::string> SdpMediaLine::type2string = {
-        {SdpMediaLine::Type::VIDEO, "video"},
-        {SdpMediaLine::Type::AUDIO, "audio"},
+    std::map<TrackType, std::string> SdpMediaLine::type2string = {
+        {TrackType::VIDEO, "video"},
+        {TrackType::AUDIO, "audio"},
     };
 
-    std::unordered_map<std::string, SdpMediaLine::SubType> SdpMediaLine::string2subtype = {
-        {"mpeg4-generic", SdpMediaLine::SubType::AAC_MP4_GEN},
-        {"h264", SdpMediaLine::SubType::H264},
+    std::unordered_map<std::string, CodecType> SdpMediaLine::string2subtype = {
+        {"mpeg4-generic", CodecType::AAC_MP4_GEN},
+        {"h264", CodecType::H264},
     };
 
-    std::map<SdpMediaLine::SubType, std::string> SdpMediaLine::subtype2string = {
-        {SdpMediaLine::SubType::AAC_MP4_GEN, "MPEG4-GENERIC"},
-        {SdpMediaLine::SubType::H264, "H264"},
-    };
-
-    std::unordered_map<std::string, SdpMediaLine::TransportType> SdpMediaLine::string2tsptype = {
-        {"rtp", SdpMediaLine::TransportType::RTP},
-        {"avp", SdpMediaLine::TransportType::AVP},
-    };
-
-    std::map<SdpMediaLine::TransportType, std::string> SdpMediaLine::tsptype2string = {
-        {SdpMediaLine::TransportType::RTP, "RTP"},
-        {SdpMediaLine::TransportType::AVP, "AVP"},
+    std::map<CodecType, std::string> SdpMediaLine::subtype2string = {
+        {CodecType::AAC_MP4_GEN, "MPEG4-GENERIC"},
+        {CodecType::H264, "H264"},
     };
 
     bool SdpMediaLine::ProcessML(const std::string &line)
     {
-        std::vector<std::string> split_vec;
-        split_string(line, split_vec, " ");
+        Clear();
 
-        if (split_vec.size() < 4)
+        char type[16]{0};
+        uint16_t port{0};
+        char transport[16]{0};
+        uint32_t payload{0};
+        // supoort webrtc sdp parse
+        uint32_t rtx_payload{0};
+
+        int ret = sscanf(line.c_str(), "%15[^ ] %hu %15[^ ] %u %u", type, &port, transport, &payload, &rtx_payload);
+        if (ret < 4)
         {
-            // 分割出来至少有四个元素
-            // 例如: rtpmap:96 H264/90000
+            LOG_E << "Error ###1";
             return false;
         }
 
-        for (std::string &str : split_vec)
+        auto it = string2type.find(type);
+        if (it == string2type.end())
         {
-            trim(str);
+            LOG_E << "Error ###2";
+            return false;
         }
 
-        std::string &type_str = split_vec[0];
-        std::string &port_str = split_vec[1];
-        std::string &transport_str = split_vec[2];
+        track_type_ = it->second;
+        port_ = port;
+        transport_ = transport;
+        payload_ = payload;
+        rtx_payload_ = rtx_payload;
+        got_ml = true;
 
+        return true;
+    }
+
+    bool SdpMediaLine::ProcessAL(const std::string &line)
+    {
+        if (!got_ml)
         {
-            // 处理type
-            to_lower_case(type_str);
-            auto it = string2type.find(type_str);
-            if (it == string2type.end())
-            {
-                return false;
-            }
-            type = it->second;
+            return false;
         }
+
+        std::string key, value;
+        size_t pos = line.find_first_of(':');
+        if (pos == std::string::npos)
         {
-            // 处理port
-            try
-            {
-                port = std::stoi(port_str);
-            }
-            catch (std::exception &e)
-            {
-                return false;
-            }
+            key = line;
         }
+        else
         {
-            // 处理传输类型
-            std::vector<std::string> transport_str_vec;
-            split_string(transport_str, transport_str_vec, "/");
-            for (std::string str : transport_str_vec)
+            key = line.substr(0, pos);
+            value = line.substr(pos + 1);
+        }
+
+        attribute_map_.emplace(key, value);
+        return true;
+    }
+
+    bool SdpMediaLine::Process()
+    {
+        if (!got_ml)
+        {
+            return false;
+        }
+
+        int ret{0};
+        auto it = attribute_map_.find("range");
+        if (it != attribute_map_.end())
+        {
+            char name[16]{0}, start[16]{0}, end[16]{0};
+            ret = sscanf(it->second.c_str(), "%15[^=]=%15[^-]-%15s", name, start, end);
+            if (ret > 2)
             {
-                trim(str);
-                to_lower_case(str);
-                auto it = string2tsptype.find(str);
-                if (it == string2tsptype.end())
+                if (strcmp(start, "now") == 0)
                 {
-                    return false;
+                    strcpy(start, "0");
                 }
-                transport_vec.emplace_back(it->second);
-            }
-        }
-
-        {
-            for (size_t i = 3; i < split_vec.size(); i++)
-            {
                 try
                 {
-                    uint32_t payload = std::stoul(split_vec[i]);
-                    payload_vec.emplace_back(payload);
+                    start_ = std::stof(start);
+                    end_ = std::stof(end);
+                    duration_ = end_ - start_;
                 }
                 catch (std::exception &e)
                 {
+                    LOG_E << "Error ###3";
                     return false;
                 }
+            }
+        }
+
+        it = attribute_map_.find("rtpmap");
+        if (it != attribute_map_.end())
+        {
+            uint32_t payload{0};
+            char codec[16]{0};
+            uint32_t samplerate{0};
+            uint32_t channel{0};
+
+            ret = sscanf(it->second.c_str(), "%u %15[^/]/%u/%u", &payload, codec, &samplerate, &channel);
+            if (ret > 2)
+            {
+                if (payload == payload_)
+                {
+                    codec_name_ = codec;
+                    to_lower_case(codec_name_);
+                    auto itc = string2subtype.find(codec_name_);
+                    if (itc == string2subtype.end())
+                    {
+                        LOG_E << "Error ###4";
+                        return false;
+                    }
+                    codec_type_ = itc->second;
+                    samplerate_ = samplerate;
+                    channels_ = channel;
+                }
+                else
+                {
+                    // Is rtx. we not need to parse it;
+                }
+            }
+            else
+            {
+                LOG_E << "Error ###4";
             }
         }
 
         return true;
+    }
+
+    void SdpMediaLine::Clear()
+    {
+        codec_name_ = "";
+        codec_type_ = CodecType::UNSET;
+        samplerate_ = 0;
+        channels_ = 0;
+        payload_ = 0;
+        rtx_payload_ = 0;
+        track_type_ = TrackType::UNSET;
+        transport_ = "";
+        start_ = 0.f;
+        end_ = 0.f;
+        duration_ = 0.f;
+        port_ = 0;
+        attribute_map_.clear();
     }
 
     void SdpParser::Process(const std::string &sdp)
@@ -122,9 +182,11 @@ namespace sms
         std::vector<std::string> line_vec;
         split_string(sdp, line_vec, "\n");
 
+        SdpMediaLine ml;
+        bool first = true;
+
         for (std::string &line : line_vec)
         {
-            trim(line);
             if (line.size() < 2 || line[1] != '=')
             {
                 continue;
@@ -160,20 +222,21 @@ namespace sms
             }
             case 'm':
             {
-                std::vector<std::string> media_line_vec;
-                split_string(line.substr(2), media_line_vec, " ");
-                //m=video 9 RTP/SAVP 96 97
-                if (media_line_vec.size() < 3)
+                if (first)
                 {
-                    LOG_E << "parse media line failed. dump:" << line;
-                    break;
+                    first = false;
+                    ml.ProcessML(line.substr(2));
                 }
-                for (std::string &str : media_line_vec)
+                else
                 {
-                    trim(str);
+                    ml.Process();
                 }
-
-                // info->
+                break;
+            }
+            case 'a':
+            {
+                ml.ProcessAL(line.substr(2));
+                break;
             }
             }
         }

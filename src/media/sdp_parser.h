@@ -2,6 +2,7 @@
 #define SMS_SDP_PARSER_H
 
 #include <common/global_inc.h>
+#include <media/track.h>
 
 namespace sms
 {
@@ -9,49 +10,35 @@ namespace sms
     class SdpMediaLine
     {
     public:
-        enum class Type : uint8_t
-        {
-            UNSET = 0,
-            AUDIO = 1,
-            VIDEO = 2
-        };
-
-        enum class SubType : uint16_t
-        {
-            UNSET = 0,
-            AAC_MP4_GEN = 100,
-            H264,
-        };
-
-        enum class TransportType : uint8_t
-        {
-            UNSET = 0,
-            RTP,
-            AVP
-        };
-
-    public:
         SdpMediaLine() = default;
         ~SdpMediaLine() = default;
 
     public:
         bool ProcessML(const std::string &line);
         bool ProcessAL(const std::string &line);
+        bool Process();
+        void Clear();
 
     public:
-        static std::unordered_map<std::string, Type> string2type;
-        static std::map<Type, std::string> type2string;
-        static std::unordered_map<std::string, SubType> string2subtype;
-        static std::map<SubType, std::string> subtype2string;
-        static std::unordered_map<std::string, TransportType> string2tsptype;
-        static std::map<TransportType, std::string> tsptype2string;
+        static std::unordered_map<std::string, TrackType> string2type;
+        static std::map<TrackType, std::string> type2string;
+        static std::unordered_map<std::string, CodecType> string2subtype;
+        static std::map<CodecType, std::string> subtype2string;
 
-        Type type{Type::UNSET};
-        SubType subtype{SubType::UNSET};
-        uint16_t port;
-        std::vector<TransportType> transport_vec;
-        std::vector<uint32_t> payload_vec;
-        std::unordered_map<std::string, std::string> attribute_map;
+        std::string codec_name_;
+        CodecType codec_type_{CodecType::UNSET};
+        uint32_t samplerate_{0};
+        uint32_t channels_{0};
+        uint32_t payload_{0};
+        uint32_t rtx_payload_{0};
+        TrackType track_type_{TrackType::UNSET};
+        std::string transport_;
+        float start_{0.f};
+        float end_{0.f};
+        float duration_{0.f};
+        uint16_t port_{0};
+        bool got_ml{false};
+        std::unordered_map<std::string, std::string> attribute_map_;
     };
 
     class SdpInfo
