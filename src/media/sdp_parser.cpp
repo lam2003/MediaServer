@@ -45,25 +45,23 @@ namespace sms
         }
 
         auto it = string2type.find(type);
-        if (it == string2type.end())
+        if (it != string2type.end())
         {
-            LOG_E << "Error ###2";
-            return false;
+            track_type_ = it->second;
         }
 
-        track_type_ = it->second;
         port_ = port;
         transport_ = transport;
         payload_ = payload;
         rtx_payload_ = rtx_payload;
-        got_ml = true;
+        got_ml_ = true;
 
         return true;
     }
 
     bool SdpMediaLine::ProcessAL(const std::string &line)
     {
-        if (!got_ml)
+        if (!got_ml_)
         {
             return false;
         }
@@ -86,7 +84,7 @@ namespace sms
 
     bool SdpMediaLine::Process()
     {
-        if (!got_ml)
+        if (!got_ml_)
         {
             return false;
         }
@@ -111,7 +109,7 @@ namespace sms
                 }
                 catch (std::exception &e)
                 {
-                    LOG_E << "Error ###3";
+                    LOG_E << "Error ###2";
                     return false;
                 }
             }
@@ -133,12 +131,10 @@ namespace sms
                     codec_name_ = codec;
                     to_lower_case(codec_name_);
                     auto itc = string2subtype.find(codec_name_);
-                    if (itc == string2subtype.end())
+                    if (itc != string2subtype.end())
                     {
-                        LOG_E << "Error ###4";
-                        return false;
+                        codec_type_ = itc->second;
                     }
-                    codec_type_ = itc->second;
                     samplerate_ = samplerate;
                     channels_ = channel;
                 }
@@ -147,12 +143,30 @@ namespace sms
                     // Is rtx. we not need to parse it;
                 }
             }
-            else
+        }
+
+        it = attribute_map_.find("fmtp");
+        if (it != attribute_map_.end())
+        {
+            uint32_t payload{0};
+            ret = sscanf(it->second.c_str(), "%u[^ ]", &payload);
+            if (ret != 1)
             {
-                LOG_E << "Error ###4";
+                LOG_E << "Error ###3";
+                return false;
+            }
+            if (payload == payload_)
+            {
+                fmtp_ = it->second.substr(it->second.find(' ') + 1);
             }
         }
 
+        it = attribute_map_.find("control");
+        if (it != attribute_map_.end())
+        {
+            std::string tmp = "/" + it->second;
+            control_ = tmp.substr(1 + tmp.rfind('/'));
+        }
         return true;
     }
 
@@ -170,7 +184,45 @@ namespace sms
         end_ = 0.f;
         duration_ = 0.f;
         port_ = 0;
+        got_ml_ = false;
+        fmtp_ = "";
+        control_ = "";
         attribute_map_.clear();
+    }
+
+    void SdpMediaLine::Dump()
+    {
+        std::ostringstream oss;
+        for (std::pair<const std::string, std::string> &p : attribute_map_)
+        {
+            oss << "[" << p.first << ", " << trim(p.second) << "2], ";
+        }
+
+        std::string tmp = oss.str();
+        if (tmp.length() > 1)
+        {
+            if (tmp[tmp.length() - 2] == ',' && tmp[tmp.length() - 1] == ' ')
+            {
+                tmp.erase(tmp.end() - 2, tmp.end());
+            }
+        }
+
+        LOG_D << "\n"
+              << "codec_name=" << codec_name_ << "\n"
+              << "codec_type=" << (int)codec_type_ << "\n"
+              << "samplerate=" << samplerate_ << "\n"
+              << "channels=" << channels_ << "\n"
+              << "payload=" << payload_ << "\n"
+              << "rtx_payload=" << rtx_payload_ << "\n"
+              << "track_type=" << (int)track_type_ << "\n"
+              << "transport=" << transport_ << "\n"
+              << "start=" << start_ << "\n"
+              << "end=" << end_ << "\n"
+              << "duration=" << duration_ << "\n"
+              << "port=" << port_ << "\n"
+              << "fmtp=" << fmtp_ << "\n"
+              << "control=" << control_ << "\n"
+              << "attribute_map=" << tmp;
     }
 
     void SdpParser::Process(const std::string &sdp)
@@ -178,12 +230,10 @@ namespace sms
         info_vec_.clear();
 
         std::shared_ptr<SdpInfo> info = std::make_shared<SdpInfo>();
+        std::shared_ptr<SdpMediaLine> ml = nullptr;
 
         std::vector<std::string> line_vec;
         split_string(sdp, line_vec, "\n");
-
-        SdpMediaLine ml;
-        bool first = true;
 
         for (std::string &line : line_vec)
         {
@@ -222,24 +272,48 @@ namespace sms
             }
             case 'm':
             {
-                if (first)
+                if (!ml)
                 {
-                    first = false;
-                    ml.ProcessML(line.substr(2));
+                    ml = std::make_shared<SdpMediaLine>();
+                    if (!ml->ProcessML(line.substr(2)))
+                    {
+                        LOG_E << "ERR ###1";
+                    }
                 }
                 else
                 {
-                    ml.Process();
+                    ml->Process();
+                    ml->Dump();
+                    info->ml_vec.emplace_back(ml);
+                    ml = std::make_shared<SdpMediaLine>();
+                    if (!ml->ProcessML(line.substr(2)))
+                    {
+                        LOG_E << "ERR ###2";
+                    }
                 }
                 break;
             }
             case 'a':
             {
-                ml.ProcessAL(line.substr(2));
+                if (ml)
+                {
+                    if (!ml->ProcessAL(line.substr(2)))
+                    {
+                        LOG_E << "ERR ###3";
+                    }
+                }
                 break;
             }
             }
         }
+
+        if (ml)
+        {
+            ml->Process();
+            ml->Dump();
+            info->ml_vec.emplace_back(ml);
+        }
+        info_vec_.emplace_back(info);
     }
 
 } // namespace sms
