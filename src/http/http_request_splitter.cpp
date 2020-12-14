@@ -26,41 +26,50 @@ namespace sms
             last_head_len = head_tail - head_front;
             rest_len -= last_head_len;
             content_len_ = on_recv_header(head_front, last_head_len);
-            head_front = head_tail;
         }
 
         if (rest_len == 0)
         {
-            LOG_D << "HttpRequestSplitter::Input() Debug ###0";
+            LOG_D << "HttpRequestSplitter::Input() Debug ###1";
             return len;
         }
 
-        // http head还未收完整
         if (content_len_ == 0)
         {
-            LOG_D << "HttpRequestSplitter::Input() Debug ###1";
-            return 0;
+            if (head_tail == head_front)
+            {
+                // http head还未收完整
+                LOG_D << "HttpRequestSplitter::Input() Debug ###2";
+                return 0;
+            }
+            else
+            {
+                // 也许这个请求未包含content
+                head_front = head_tail;
+                goto again;
+            }
         }
 
         // http content还未收完整
         if (rest_len < content_len_)
         {
-            LOG_D << "HttpRequestSplitter::Input() Debug ###2";
+            LOG_D << "HttpRequestSplitter::Input() Debug ###3";
             return len - rest_len;
         }
 
         on_recv_content(head_tail, content_len_);
         rest_len -= content_len_;
-        head_front += content_len_;
+        head_tail += content_len_;
         content_len_ = 0;
 
         if (rest_len != 0)
         {
-            LOG_D << "HttpRequestSplitter::Input() Debug ###3";
+            LOG_D << "HttpRequestSplitter::Input() Debug ###4";
+            head_front = head_tail;
             goto again;
         }
 
-        LOG_D << "HttpRequestSplitter::Input() Debug ###4";
+        LOG_D << "HttpRequestSplitter::Input() Debug ###5";
 
         return len;
     }
