@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     // LOG_D<<info.schema_<<" "<<info.app_ << " "<<info.stream_id_<<" "<< info.param_strs_ <<" "<<info.vhost_;
 
     buf->Assign(buff, 2 * 1024 * 1024);
-    tcp_server.Start(reinterpret_cast<uv_tcp_t *>(SocketUtils::Bind(SocketUtils::SOCK_TCP, "0.0.0.0", 80)), 1024);
+    tcp_server.Start(reinterpret_cast<uv_tcp_t *>(SocketUtils::Bind(SocketUtils::SOCK_TCP, "0.0.0.0", 8088)), 1024);
     tcp_server.SetAcceptCB([buf](TcpConnection *cc) {
         // std::list<std::shared_ptr<Buffer>> ll;
         // ll.push_back(buf);
