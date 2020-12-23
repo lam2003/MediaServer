@@ -1,4 +1,4 @@
 [submodule "3rdparty/libuv"]
 	path = 3rdparty/libuv
-	url = https://github.com/libuv/libuv.git
+	url = https://gitee.com/linmin3/libuv.git
 	branch = v1.x
