@@ -23,10 +23,6 @@ namespace sms
 
     protected:
         bool is_rtp_packet_{false};
-        int cseq_{0};
-        std::string session_id_;
-        std::string content_base_;
-        MediaInfo media_info_;
     };
 } // namespace sms
 

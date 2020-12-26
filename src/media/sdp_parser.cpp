@@ -1,32 +1,32 @@
-#include <media/sdp_parser.h>
 #include <common/config.h>
 #include <common/utils.h>
 #include <common/logger.h>
+#include <media/sdp_parser.h>
 
 namespace sms
 {
 
-    std::unordered_map<std::string, TrackType> SdpMediaLine::string2type = {
-        {"video", TrackType::VIDEO},
-        {"audio", TrackType::AUDIO},
+    std::unordered_map<std::string, SdpTrackType> SdpMediaTrack::string2type = {
+        {"video", SdpTrackType::VIDEO},
+        {"audio", SdpTrackType::AUDIO},
     };
 
-    std::map<TrackType, std::string> SdpMediaLine::type2string = {
-        {TrackType::VIDEO, "video"},
-        {TrackType::AUDIO, "audio"},
+    std::map<SdpTrackType, std::string> SdpMediaTrack::type2string = {
+        {SdpTrackType::VIDEO, "video"},
+        {SdpTrackType::AUDIO, "audio"},
     };
 
-    std::unordered_map<std::string, CodecType> SdpMediaLine::string2subtype = {
-        {"mpeg4-generic", CodecType::AAC_MP4_GEN},
-        {"h264", CodecType::H264},
+    std::unordered_map<std::string, SdpCodecType> SdpMediaTrack::string2subtype = {
+        {"mpeg4-generic", SdpCodecType::AAC_MP4_GEN},
+        {"h264", SdpCodecType::H264},
     };
 
-    std::map<CodecType, std::string> SdpMediaLine::subtype2string = {
-        {CodecType::AAC_MP4_GEN, "MPEG4-GENERIC"},
-        {CodecType::H264, "H264"},
+    std::map<SdpCodecType, std::string> SdpMediaTrack::subtype2string = {
+        {SdpCodecType::AAC_MP4_GEN, "MPEG4-GENERIC"},
+        {SdpCodecType::H264, "H264"},
     };
 
-    bool SdpMediaLine::ProcessML(const std::string &line)
+    bool SdpMediaTrack::ProcessML(const std::string &line)
     {
         Clear();
 
@@ -59,7 +59,7 @@ namespace sms
         return true;
     }
 
-    bool SdpMediaLine::ProcessAL(const std::string &line)
+    bool SdpMediaTrack::ProcessAL(const std::string &line)
     {
         if (!got_ml_)
         {
@@ -82,7 +82,7 @@ namespace sms
         return true;
     }
 
-    bool SdpMediaLine::Process()
+    bool SdpMediaTrack::Process()
     {
         if (!got_ml_)
         {
@@ -170,15 +170,15 @@ namespace sms
         return true;
     }
 
-    void SdpMediaLine::Clear()
+    void SdpMediaTrack::Clear()
     {
         codec_name_ = "";
-        codec_type_ = CodecType::UNSET;
+        codec_type_ = SdpCodecType::UNSET;
         samplerate_ = 0;
         channels_ = 0;
         payload_ = 0;
         rtx_payload_ = 0;
-        track_type_ = TrackType::UNSET;
+        track_type_ = SdpTrackType::UNSET;
         transport_ = "";
         start_ = 0.f;
         end_ = 0.f;
@@ -190,7 +190,7 @@ namespace sms
         attribute_map_.clear();
     }
 
-    void SdpMediaLine::Dump()
+    void SdpMediaTrack::Dump()
     {
         std::ostringstream oss;
         for (std::pair<const std::string, std::string> &p : attribute_map_)
@@ -225,12 +225,76 @@ namespace sms
               << "attribute_map=" << tmp;
     }
 
+    const std::string &SdpMediaTrack::GetCodecName() const
+    {
+        return codec_name_;
+    }
+    SdpCodecType SdpMediaTrack::GetCodecType() const
+    {
+        return codec_type_;
+    }
+    uint32_t SdpMediaTrack::GetSamplerate() const
+    {
+        return samplerate_;
+    }
+    uint32_t SdpMediaTrack::GetChannels() const
+    {
+        return channels_;
+    }
+    uint32_t SdpMediaTrack::GetPayload() const
+    {
+        return payload_;
+    }
+    uint32_t SdpMediaTrack::GetRTXPayload() const
+    {
+        return rtx_payload_;
+    }
+    SdpTrackType SdpMediaTrack::GetTrackType() const
+    {
+        return track_type_;
+    }
+    const std::string &SdpMediaTrack::GetTransport() const
+    {
+        return transport_;
+    }
+    float SdpMediaTrack::GetStartTime() const
+    {
+        return start_;
+    }
+    float SdpMediaTrack::GetEndTime() const
+    {
+        return end_;
+    }
+    float SdpMediaTrack::GetDuration() const
+    {
+        return duration_;
+    }
+    uint16_t SdpMediaTrack::GetPort() const
+    {
+        return port_;
+    }
+    const std::string &SdpMediaTrack::GetFmtp() const
+    {
+        return fmtp_;
+    }
+    const std::string &SdpMediaTrack::GetControl() const
+    {
+        return control_;
+    }
+    const std::unordered_map<std::string, std::string> &SdpMediaTrack::GetAttributeMap() const
+    {
+        return attribute_map_;
+    }
+
+    SdpParser::SdpParser(const std::string &sdp)
+    {
+        Process(sdp);
+    }
+
     void SdpParser::Process(const std::string &sdp)
     {
-        info_vec_.clear();
-
         std::shared_ptr<SdpInfo> info = std::make_shared<SdpInfo>();
-        std::shared_ptr<SdpMediaLine> ml = nullptr;
+        std::shared_ptr<SdpMediaTrack> ml = nullptr;
 
         std::vector<std::string> line_vec;
         split_string(sdp, line_vec, "\n");
@@ -274,7 +338,7 @@ namespace sms
             {
                 if (!ml)
                 {
-                    ml = std::make_shared<SdpMediaLine>();
+                    ml = std::make_shared<SdpMediaTrack>();
                     if (!ml->ProcessML(line.substr(2)))
                     {
                         LOG_E << "ERR ###1";
@@ -284,8 +348,8 @@ namespace sms
                 {
                     ml->Process();
                     ml->Dump();
-                    info->ml_vec.emplace_back(ml);
-                    ml = std::make_shared<SdpMediaLine>();
+                    info->media_track_vec_.emplace_back(ml);
+                    ml = std::make_shared<SdpMediaTrack>();
                     if (!ml->ProcessML(line.substr(2)))
                     {
                         LOG_E << "ERR ###2";
@@ -311,9 +375,41 @@ namespace sms
         {
             ml->Process();
             ml->Dump();
-            info->ml_vec.emplace_back(ml);
+            info->media_track_vec_.emplace_back(ml);
         }
-        info_vec_.emplace_back(info);
+        info_ = info;
+    }
+
+    std::vector<std::shared_ptr<SdpMediaTrack>> SdpParser::GetMediaTracks() const
+    {
+        std::vector<std::shared_ptr<SdpMediaTrack>> res;
+        if (!info_)
+        {
+            return res;
+        }
+
+        res.reserve(2);
+        bool got_audio = false;
+        bool got_video = false;
+
+        for (auto &track : info_->media_track_vec_)
+        {
+            if (!got_audio && track->GetTrackType() == SdpTrackType::AUDIO)
+            {
+                got_audio = true;
+                res.emplace_back(track);
+                continue;
+            }
+
+            if (!got_video && track->GetTrackType() == SdpTrackType::VIDEO)
+            {
+                got_video = true;
+                res.emplace_back(track);
+                continue;
+            }
+        }
+
+        return res;
     }
 
 } // namespace sms

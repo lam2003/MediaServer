@@ -9,6 +9,13 @@ namespace sms
     class SockException : public std::exception
     {
     public:
+        enum ErrCode
+        {
+            UNSET = 0,
+            SHUTDOWN = 1,
+        };
+
+    public:
         SockException(const std::string &msg, int code)
         {
             msg_ = msg;
@@ -25,6 +32,11 @@ namespace sms
         operator bool() const
         {
             return code_ != 0;
+        }
+
+        int err_code() const
+        {
+            return code_;
         }
 
     private:

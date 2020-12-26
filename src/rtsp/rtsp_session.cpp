@@ -37,10 +37,19 @@ namespace sms
         send_rtsp_response("200 OK", {"Public", "OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, ANNOUNCE, RECORD, SET_PARAMETER, GET_PARAMETER"});
     }
 
-    void RtspSession::handle_announce(const HttpParser &parser)
+    void RtspSession::handle_announce(const HttpParser &http_parser)
     {
-        SdpParser p;
-        p.Process(parser.Content());
+        if (media_info_.App().empty() || media_info_.StreamID().empty())
+        {
+            send_rtsp_response("403 Forbidden", {"Content-Type", "text/plain"},
+                               "illegal url. stream url format should like rtsp://$host/$app/$stream_id");
+            throw SockException("illegal url", SockException::SHUTDOWN);
+        }
+        SdpParser sdp_parser;
+        sdp_parser.Process(http_parser.Content());
+
+        sdp_media_track_vec_ = sdp_parser.GetMediaTracks();
+        send_rtsp_response("200 OK", {"Content-Base", content_base_ + "/"});
         // send_rtsp_response("200 OK", {"Public", "OPTIONS, DESCRIBE, SETUP, TEARDOWN, PLAY, PAUSE, ANNOUNCE, RECORD, SET_PARAMETER, GET_PARAMETER"});
     }
 
@@ -161,7 +170,7 @@ namespace sms
         }
         catch (std::exception &e)
         {
-            LOG_E << "handle method: " << method << " failed: " << e.what();
+            LOG_E << e.what();
             shutdown();
         }
 

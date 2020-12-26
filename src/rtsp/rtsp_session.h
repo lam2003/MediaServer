@@ -1,5 +1,6 @@
 #include <net/tcp_session.h>
 #include <rtsp/rtsp_splitter.h>
+#include <media/sdp_parser.h>
 
 namespace sms
 {
@@ -40,6 +41,11 @@ namespace sms
 
     private:
         size_t bytes_usage_{0};
+        int cseq_{0};
+        std::string session_id_;
+        std::string content_base_;
+        MediaInfo media_info_;
+        std::vector<std::shared_ptr<SdpMediaTrack>> sdp_media_track_vec_;
     };
 
 } // namespace sms

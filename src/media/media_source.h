@@ -8,10 +8,7 @@ namespace sms
     {
     public:
         MediaInfo() = default;
-        MediaInfo(const std::string &url)
-        {
-            Process(url);
-        }
+        MediaInfo(const std::string &url);
         ~MediaInfo() = default;
 
     public:

@@ -6,6 +6,11 @@
 namespace sms
 {
 
+    MediaInfo::MediaInfo(const std::string &url)
+    {
+        Process(url);
+    }
+
     void MediaInfo::Process(const std::string &url_in)
     {
         std::string url = url_in;
