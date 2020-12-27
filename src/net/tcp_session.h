@@ -18,8 +18,8 @@ namespace sms
         virtual void OnManage() = 0;
 
     protected:
-        virtual void send(const std::shared_ptr<BufferList> &list);
-        virtual void send(const std::shared_ptr<Buffer> &buf);
+        virtual void send(const BufferList::Ptr &list);
+        virtual void send(const Buffer::Ptr &buf);
         virtual void shutdown();
 
     private:

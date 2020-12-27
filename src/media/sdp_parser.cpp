@@ -293,8 +293,8 @@ namespace sms
 
     void SdpParser::Process(const std::string &sdp)
     {
-        std::shared_ptr<SdpInfo> info = std::make_shared<SdpInfo>();
-        std::shared_ptr<SdpMediaTrack> ml = nullptr;
+        SdpInfo::Ptr info = std::make_shared<SdpInfo>();
+        SdpMediaTrack::Ptr ml = nullptr;
 
         std::vector<std::string> line_vec;
         split_string(sdp, line_vec, "\n");
@@ -380,9 +380,9 @@ namespace sms
         info_ = info;
     }
 
-    std::vector<std::shared_ptr<SdpMediaTrack>> SdpParser::GetMediaTracks() const
+    std::vector<SdpMediaTrack::Ptr> SdpParser::GetMediaTracks() const
     {
-        std::vector<std::shared_ptr<SdpMediaTrack>> res;
+        std::vector<SdpMediaTrack::Ptr> res;
         if (!info_)
         {
             return res;

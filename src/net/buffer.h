@@ -11,6 +11,8 @@ namespace sms
     class Buffer : public NonCopyable
     {
     public:
+        using Ptr = std::shared_ptr<Buffer>;
+
         Buffer() = default;
 
         virtual ~Buffer() = default;
@@ -92,6 +94,8 @@ namespace sms
     class BufferRaw final : public Buffer
     {
     public:
+        using Ptr = std::shared_ptr<BufferRaw>;
+
         BufferRaw(uint32_t capacity = 0)
         {
             if (capacity)
@@ -99,6 +103,7 @@ namespace sms
                 SetCapacity(capacity);
             }
         }
+    
         ~BufferRaw()
         {
             if (data_)
@@ -189,7 +194,8 @@ namespace sms
     class BufferList : public NonCopyable
     {
     public:
-        BufferList(std::list<std::shared_ptr<Buffer>> &list);
+        using Ptr = std::shared_ptr<BufferList>;
+        BufferList(std::list<Buffer::Ptr> &list);
         ~BufferList();
 
     public:
@@ -204,7 +210,7 @@ namespace sms
         int buf_num_{0};
         int buf_off_{0};
         int remain_size_{0};
-        std::list<std::shared_ptr<Buffer>> pkt_list_;
+        std::list<Buffer::Ptr> pkt_list_;
     };
 
 } // namespace sms

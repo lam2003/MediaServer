@@ -37,7 +37,7 @@ namespace sms
 
         const std::string &GetLoggerName() const;
 
-        void SetWriter(std::shared_ptr<LogWriter> writer);
+        void SetWriter(const std::shared_ptr<LogWriter> &writer);
 
         void SetLevel(LogLevel level);
 
@@ -47,7 +47,7 @@ namespace sms
         Logger(const std::string &logger_name);
 
     private:
-        void write_channels(const std::shared_ptr<LogContext> pctx);
+        void write_channels(const std::shared_ptr<LogContext> &pctx);
 
     private:
         std::map<std::string, std::shared_ptr<LogChannel>> channels_;

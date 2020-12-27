@@ -124,13 +124,13 @@ namespace sms
         send_rtsp_response(res_code, header_map, sdp, protocol);
     }
 
-    void RtspSession::send(const std::shared_ptr<BufferList> &list)
+    void RtspSession::send(const BufferList::Ptr &list)
     {
         bytes_usage_ += list->GetRemainSize();
         TcpSession::send(list);
     }
 
-    void RtspSession::send(const std::shared_ptr<Buffer> &buf)
+    void RtspSession::send(const Buffer::Ptr &buf)
     {
         bytes_usage_ += buf->Size();
         TcpSession::send(buf);

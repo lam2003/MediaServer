@@ -18,10 +18,11 @@ namespace sms
         H264,
         AAC_MP4_GEN
     };
-    
+
     class SdpMediaTrack
     {
     public:
+        using Ptr = std::shared_ptr<SdpMediaTrack>;
         SdpMediaTrack() = default;
         SdpMediaTrack(const std::string &sdp);
         ~SdpMediaTrack() = default;
@@ -77,13 +78,14 @@ namespace sms
 
     struct SdpInfo
     {
-        std::string v;                                                // version 版本
-        std::string o;                                                // origin 来源（会话发起者）
-        std::string s;                                                // session name 会话名称
-        std::string t;                                                // timing 会话开始和结束时间，如果两个值都为0， 意味着会话是永久的
-        std::string b;                                                // bandwidth 建议带宽
-        std::string c;                                                // connection data 连接信息，在sip协议下十分重要
-        std::vector<std::shared_ptr<SdpMediaTrack>> media_track_vec_; // media line 媒体行
+        using Ptr = std::shared_ptr<SdpInfo>;
+        std::string v;                                    // version 版本
+        std::string o;                                    // origin 来源（会话发起者）
+        std::string s;                                    // session name 会话名称
+        std::string t;                                    // timing 会话开始和结束时间，如果两个值都为0， 意味着会话是永久的
+        std::string b;                                    // bandwidth 建议带宽
+        std::string c;                                    // connection data 连接信息，在sip协议下十分重要
+        std::vector<SdpMediaTrack::Ptr> media_track_vec_; // media line 媒体行
     };
 
     class SdpParser
@@ -95,10 +97,10 @@ namespace sms
 
     public:
         void Process(const std::string &sdp);
-        std::vector<std::shared_ptr<SdpMediaTrack>> GetMediaTracks() const;
+        std::vector<SdpMediaTrack::Ptr> GetMediaTracks() const;
 
     private:
-        std::shared_ptr<SdpInfo> info_{nullptr};
+        SdpInfo::Ptr info_{nullptr};
     };
 } // namespace sms
 

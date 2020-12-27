@@ -19,8 +19,8 @@ namespace sms
 
     protected:
         // override TcpSession
-        void send(const std::shared_ptr<BufferList> &list) override;
-        void send(const std::shared_ptr<Buffer> &buf) override;
+        void send(const BufferList::Ptr &list) override;
+        void send(const Buffer::Ptr &buf) override;
 
         // override RtspSplitter
         void on_whole_rtsp_packet(HttpParser &parser) override;
@@ -45,7 +45,7 @@ namespace sms
         std::string session_id_;
         std::string content_base_;
         MediaInfo media_info_;
-        std::vector<std::shared_ptr<SdpMediaTrack>> sdp_media_track_vec_;
+        std::vector<SdpMediaTrack::Ptr> sdp_media_track_vec_;
     };
 
 } // namespace sms

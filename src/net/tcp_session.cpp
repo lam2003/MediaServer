@@ -15,14 +15,14 @@ namespace sms
         shutdown();
     }
 
-    void TcpSession::send(const std::shared_ptr<BufferList> &list)
+    void TcpSession::send(const BufferList::Ptr &list)
     {
         conn_->Write(list, [](bool) {
             // ignore
         });
     }
 
-    void TcpSession::send(const std::shared_ptr<Buffer> &buf)
+    void TcpSession::send(const Buffer::Ptr &buf)
     {
         conn_->Write(buf, [](bool) {
             // ignore

@@ -18,12 +18,12 @@ namespace sms
         class UvWriteData : public NonCopyable
         {
         public:
-            explicit UvWriteData(const std::shared_ptr<BufferList> &list)
+            explicit UvWriteData(const BufferList::Ptr &list)
             {
                 this->list = list;
             }
 
-            explicit UvWriteData(const std::shared_ptr<Buffer> &buf)
+            explicit UvWriteData(const Buffer::Ptr &buf)
             {
                 this->buf = buf;
             }
@@ -31,8 +31,8 @@ namespace sms
             ~UvWriteData() = default;
 
             uv_write_t req;
-            std::shared_ptr<BufferList> list{nullptr};
-            std::shared_ptr<Buffer> buf{nullptr};
+            BufferList::Ptr list{nullptr};
+            Buffer::Ptr buf{nullptr};
             TcpConnection::WriteCB cb{nullptr};
         };
 
@@ -46,8 +46,8 @@ namespace sms
                   const std::string &local_ip,
                   uint16_t local_port, ClosedCB &&on_closed);
         int Start();
-        void Write(const std::shared_ptr<Buffer> &buf, WriteCB &&cb);
-        void Write(const std::shared_ptr<BufferList> &list, WriteCB &&cb);
+        void Write(const Buffer::Ptr &buf, WriteCB &&cb);
+        void Write(const BufferList::Ptr &list, WriteCB &&cb);
         void SetReadCB(ReadCB &&read_cb);
         void SetClosedCB(ClosedCB &&closed_cb);
         void SetErrorCB(ErrorCB &&error_cb);

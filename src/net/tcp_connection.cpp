@@ -146,7 +146,7 @@ namespace sms
         return 0;
     }
 
-    void TcpConnection::Write(const std::shared_ptr<Buffer> &buf, WriteCB &&cb)
+    void TcpConnection::Write(const Buffer::Ptr &buf, WriteCB &&cb)
     {
         if (closed_)
         {
@@ -235,7 +235,7 @@ namespace sms
         }
     }
 
-    void TcpConnection::Write(const std::shared_ptr<BufferList> &list, WriteCB &&cb)
+    void TcpConnection::Write(const BufferList::Ptr &list, WriteCB &&cb)
     {
         if (closed_)
         {

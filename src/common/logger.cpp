@@ -47,7 +47,7 @@ namespace sms
         return logger_name_;
     }
 
-    void Logger::SetWriter(std::shared_ptr<LogWriter> writer)
+    void Logger::SetWriter(const std::shared_ptr<LogWriter> &writer)
     {
         writer_ = writer;
     }
@@ -71,7 +71,7 @@ namespace sms
         writer_->Write(pctx);
     }
 
-    void Logger::write_channels(const std::shared_ptr<LogContext> pctx)
+    void Logger::write_channels(const std::shared_ptr<LogContext> &pctx)
     {
         for (std::pair<const std::string, std::shared_ptr<LogChannel>> &it :
              channels_)

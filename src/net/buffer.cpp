@@ -3,14 +3,14 @@
 namespace sms
 {
 
-    BufferList::BufferList(std::list<std::shared_ptr<Buffer>> &list)
+    BufferList::BufferList(std::list<Buffer::Ptr> &list)
     {
         buf_ = new uv_buf_t[list.size()];
 
         std::swap(pkt_list_, list);
 
         int i = 0;
-        for (const std::shared_ptr<Buffer> &ptr : pkt_list_)
+        for (const Buffer::Ptr &ptr : pkt_list_)
         {
             buf_[i].base = reinterpret_cast<char *>(ptr->Data());
             buf_[i].len = ptr->Size();
