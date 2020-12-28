@@ -4,6 +4,14 @@
 #include <common/global_inc.h>
 namespace sms
 {
+
+    class TrackSource
+    {
+    public:
+        TrackSource() = default;
+        virtual ~TrackSource() = default;
+    
+    };
     class MediaInfo
     {
     public:
