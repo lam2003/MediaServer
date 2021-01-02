@@ -77,10 +77,7 @@ namespace sms
         /**
          * 是否可以缓存
          */
-        virtual bool CacheAble() const
-        {
-            return true;
-        }
+        virtual bool IsCacheAble() const;
 
         /**
          * 返回可缓存的frame
@@ -91,7 +88,7 @@ namespace sms
     class FrameImpl : public Frame
     {
     public:
-        typedef std::shared_ptr<FrameImpl> Ptr;
+        using Ptr = std::shared_ptr<FrameImpl>;
 
         FrameImpl() = default;
 
@@ -105,19 +102,19 @@ namespace sms
 
     public:
         // class Frame
-        // uint64_t GetDTS() const override;
+        uint64_t GetDTS() const override;
 
-        // uint64_t GetPTS() const override;
+        uint64_t GetPTS() const override;
 
-        // size_t PrefixSize() const override;
+        size_t PrefixSize() const override;
 
-        // bool IsKeyFrame() const override;
+        bool IsKeyFrame() const override;
 
-        // bool IsConfigFrame() const override;
+        bool IsConfigFrame() const override;
 
     public:
         // class CodecInfo
-        // CodecId GetCodecId() const override;
+        CodecId GetCodecId() const override;
 
     private:
         uint64_t pts_{0};
@@ -125,6 +122,55 @@ namespace sms
         size_t prefix_size_{0};
         CodecId codec_id_{CodecId::UNSET};
         BufferLikeString buffer_;
+    };
+
+    class FrameFromPtr : public Frame
+    {
+    public:
+        using Ptr = std::shared_ptr<FrameFromPtr>;
+
+        FrameFromPtr(CodecId codec_id,
+                     const char *ptr,
+                     size_t size,
+                     uint64_t dts,
+                     uint64_t pts = 0,
+                     size_t prefix_size = 0);
+
+        FrameFromPtr(const char *ptr,
+                     size_t size,
+                     uint64_t dts,
+                     uint64_t pts = 0,
+                     size_t prefix_size = 0);
+
+    public:
+        // class Buffer
+        char *Data() const override;
+
+        size_t Size() const override;
+
+    public:
+        // class Frame
+        uint64_t GetDTS() const override;
+
+        uint64_t GetPTS() const override;
+
+        size_t PrefixSize() const override;
+
+        bool IsKeyFrame() const override;
+
+        bool IsConfigFrame() const override;
+
+    public:
+        // class CodecInfo
+        CodecId GetCodecId() const override;
+
+    private:
+        char *ptr_{nullptr};
+        size_t size_{0};
+        uint64_t dts_{0};
+        uint64_t pts_{0};
+        size_t prefix_size_{0};
+        CodecId codec_id_{CodecId::UNSET};
     };
 
     class FrameWriterInterface
