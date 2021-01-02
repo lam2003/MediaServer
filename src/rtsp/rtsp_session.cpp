@@ -5,6 +5,8 @@
 #include <common/logger.h>
 #include <media/sdp_parser.h>
 
+#define SMS_RTSP_SCHEMA "rtsp"
+
 namespace sms
 {
     RtspSession::RtspSession(TcpConnection *conn) : TcpSession(conn)
@@ -74,7 +76,7 @@ namespace sms
             header.emplace("Session", session_id_);
         }
 
-        header.emplace("Server", SERVER_NAME);
+        header.emplace("Server", SMS_SERVER_NAME);
         header.emplace("Data", rtsp_date_str());
 
         if (!sdp.empty())

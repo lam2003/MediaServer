@@ -2,6 +2,9 @@
 #include <common/config.h>
 #include <common/logger.h>
 
+#define SMS_HTTP_HEADER_END "\r\n\r\n"
+#define SMS_HTTP_HEADER_END_LEN 4
+
 namespace sms
 {
 

@@ -3,6 +3,8 @@
 #include <common/config.h>
 #include <common/logger.h>
 
+#define SMS_RTSP_RTP_BEGIN_CHAR '$'
+
 namespace sms
 {
 

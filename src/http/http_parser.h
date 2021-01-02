@@ -3,6 +3,11 @@
 
 #include <common/global_inc.h>
 
+#define SMS_HTTP_SEPARATOR_CHAR ": "
+#define SMS_HTTP_SPACE_CHAR " "
+#define SMS_HTTP_CRLF_CHAR "\r\n"
+#define SMS_HTTP_CRLF_CHAR_LEN 2
+
 namespace sms
 {
 

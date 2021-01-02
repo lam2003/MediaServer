@@ -53,7 +53,7 @@ namespace sms
             if (vhost_ == "localhost" || INADDR_NONE != inet_addr(vhost_.data()))
             {
                 //如果访问的是localhost或ip，那么则为默认虚拟主机
-                vhost_ = DEFAULT_VHOST;
+                vhost_ = SMS_DEFAULT_VHOST;
             }
         }
         if (split_vec.size() > 1)
@@ -75,9 +75,9 @@ namespace sms
         }
 
         StrCaseMap params = HttpParser::ParseArgs(param_strs_);
-        if (params.find(VHOST_KEY) != params.end())
+        if (params.find(SMS_VHOST_KEY) != params.end())
         {
-            vhost_ = params[VHOST_KEY];
+            vhost_ = params[SMS_VHOST_KEY];
         }
 
         bool enableVhost = true;
@@ -85,7 +85,7 @@ namespace sms
         if (!enableVhost || vhost_.empty())
         {
             //如果关闭虚拟主机或者虚拟主机为空，则设置虚拟主机为默认
-            vhost_ = DEFAULT_VHOST;
+            vhost_ = SMS_DEFAULT_VHOST;
         }
     }
 
