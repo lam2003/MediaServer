@@ -34,6 +34,264 @@ namespace sms
         }
     };
 
+    class BufferLikeString final : public Buffer
+    {
+    public:
+        BufferLikeString() = default;
+
+        BufferLikeString(std::string &&str)
+        {
+            str_ = std::move(str);
+        }
+
+        BufferLikeString(const std::string &str)
+        {
+            str_ = str;
+        }
+
+        BufferLikeString(const char *str)
+        {
+            str_ = str;
+        }
+
+        BufferLikeString &operator=(std::string &&str)
+        {
+            str_ = std::move(str);
+            return *this;
+        }
+
+        BufferLikeString &operator=(const std::string &str)
+        {
+            str_ = str;
+            return *this;
+        }
+
+        BufferLikeString &operator=(const char *str)
+        {
+            str_ = str;
+            return *this;
+        }
+
+        ~BufferLikeString() = default;
+
+    public:
+        // class Buffer;
+        uint8_t *Data() const override
+        {
+            return reinterpret_cast<uint8_t *>(const_cast<char *>(str_.data())) + erase_head_;
+        }
+
+        size_t Size() const override
+        {
+            return str_.size() - erase_tail_ - erase_head_;
+        }
+
+        size_t Capacity() const override
+        {
+            return str_.capacity();
+        }
+
+    public:
+        BufferLikeString &Erase(std::string::size_type pos = 0, std::string::size_type n = std::string::npos)
+        {
+            if (pos == 0)
+            {
+                if (n != std::string::npos)
+                {
+                    if (n > Size())
+                    {
+                        n = Size();
+                    }
+
+                    erase_head_ += n;
+                    Data()[Size()] = '\0';
+                    return *this;
+                }
+
+                erase_head_ = 0;
+                erase_tail_ = str_.size();
+                Data()[Size()] = '\0';
+                return *this;
+            }
+
+            if (n == std::string::npos || pos + n >= Size())
+            {
+                if (pos >= Size())
+                {
+                    pos = Size();
+                }
+
+                erase_tail_ += Size() - pos;
+                Data()[Size()] = '\0';
+                return *this;
+            }
+
+            str_.erase(erase_head_ + pos, n);
+
+            return *this;
+        }
+
+        BufferLikeString &Append(const char *data, int len)
+        {
+            if (len <= 0)
+            {
+                return *this;
+            }
+
+            if (erase_head_ > str_.capacity() / 2)
+            {
+                move_data();
+            }
+
+            if (erase_tail_ == 0)
+            {
+                str_.append(data, len);
+                return *this;
+            }
+
+            str_.insert(erase_head_ + Size(), data, len);
+            return *this;
+        }
+
+        BufferLikeString &Append(const BufferLikeString &str)
+        {
+            Append(reinterpret_cast<const char *>(str.Data()), str.Size());
+            return *this;
+        }
+
+        BufferLikeString &Append(const std::string &str)
+        {
+            Append(str.data(), str.size());
+            return *this;
+        }
+
+        BufferLikeString &Append(const char *str)
+        {
+            Append(str, strlen(str));
+            return *this;
+        }
+
+        void PushBack(char c)
+        {
+            if (erase_tail_ == 0)
+            {
+                str_.push_back(c);
+                return;
+            }
+            Data()[Size()] = c;
+            --erase_tail_;
+            Data()[Size()] = '\0';
+        }
+
+        BufferLikeString &Insert(std::string::size_type pos, const char *str, std::string::size_type n)
+        {
+            str_.insert(erase_head_ + pos, str, n);
+            return *this;
+        }
+
+        BufferLikeString &Assign(const char *data, int len)
+        {
+            if (len <= 0)
+            {
+                return *this;
+            }
+
+            if (str_.data() <= data && data < str_.data() + str_.size())
+            {
+                erase_head_ = data - str_.data();
+                if (data + len > str_.data() + str_.size())
+                {
+                    len = str_.data() + str_.size() - data;
+                }
+
+                erase_tail_ = str_.data() + str_.size() - data - len;
+                return *this;
+            }
+
+            str_.assign(data, len);
+            erase_head_ = 0;
+            erase_tail_ = 0;
+            return *this;
+        }
+
+        void Clear()
+        {
+            erase_head_ = 0;
+            erase_tail_ = 0;
+            str_.clear();
+        }
+
+        char &operator[](std::string::size_type pos)
+        {
+            if (pos > Size())
+            {
+                return zero_;
+            }
+
+            return reinterpret_cast<char *>(Data())[pos];
+        }
+
+        const char &operator[](std::string::size_type pos) const
+        {
+            if (pos > Size())
+            {
+                return zero_;
+            }
+
+            return reinterpret_cast<char *>(Data())[pos];
+        }
+
+        void Reserve(std::string::size_type size)
+        {
+            str_.reserve(size);
+        }
+
+        bool Empty() const
+        {
+            return Size() <= 0;
+        }
+
+        std::string SubStr(std::string::size_type pos, std::string::size_type n = std::string::npos) const
+        {
+            if (n == std::string::npos)
+            {
+                if (pos > Size())
+                {
+                    return "";
+                }
+                return str_.substr(erase_head_ + pos, Size() - pos);
+            }
+
+            if (pos > Size())
+            {
+                return "";
+            }
+
+            if (pos + n > Size())
+            {
+                return str_.substr(erase_head_ + pos, Size() - pos);
+            }
+
+            return str_.substr(erase_head_ + pos, n);
+        }
+
+    private:
+        void move_data()
+        {
+            if (erase_head_)
+            {
+                str_.erase(0, erase_head_);
+                erase_head_ = 0;
+            }
+        }
+
+    private:
+        uint32_t erase_head_{0};
+        uint32_t erase_tail_{0};
+        std::string str_;
+        char zero_{'\0'};
+    };
+
     class BufferString final : public Buffer
     {
     public:
@@ -103,7 +361,7 @@ namespace sms
                 SetCapacity(capacity);
             }
         }
-    
+
         ~BufferRaw()
         {
             if (data_)
