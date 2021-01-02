@@ -88,6 +88,45 @@ namespace sms
         static Ptr GetCacheAbleFrame(const Ptr &frame);
     };
 
+    class FrameImpl : public Frame
+    {
+    public:
+        typedef std::shared_ptr<FrameImpl> Ptr;
+
+        FrameImpl() = default;
+
+        ~FrameImpl() = default;
+
+    public:
+        // class Buffer
+        char *Data() const override;
+
+        size_t Size() const override;
+
+    public:
+        // class Frame
+        // uint64_t GetDTS() const override;
+
+        // uint64_t GetPTS() const override;
+
+        // size_t PrefixSize() const override;
+
+        // bool IsKeyFrame() const override;
+
+        // bool IsConfigFrame() const override;
+
+    public:
+        // class CodecInfo
+        // CodecId GetCodecId() const override;
+
+    private:
+        uint64_t pts_{0};
+        uint64_t dts_{0};
+        size_t prefix_size_{0};
+        CodecId codec_id_{CodecId::UNSET};
+        BufferLikeString buffer_;
+    };
+
     class FrameWriterInterface
     {
     public:

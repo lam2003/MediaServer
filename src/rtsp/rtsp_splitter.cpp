@@ -6,7 +6,7 @@
 namespace sms
 {
 
-    const uint8_t *RtspSplitter::on_search_packet_tail(const uint8_t *data, size_t len)
+    const char *RtspSplitter::on_search_packet_tail(const char *data, size_t len)
     {
         if (len < 1)
         {
@@ -27,17 +27,17 @@ namespace sms
         }
     }
 
-    size_t RtspSplitter::on_recv_header(const uint8_t *data, size_t len)
+    size_t RtspSplitter::on_recv_header(const char *data, size_t len)
     {
         if (is_rtp_packet_)
         {
             return 0;
         }
 
-        std::string str(reinterpret_cast<const char *>(data), len);
+        std::string str(data, len);
         LOG_I << "################ header: " << str;
 
-        parser_.Process(std::string(reinterpret_cast<const char *>(data), len));
+        parser_.Process(std::string(data, len));
 
         int content_len = atoi(parser_["Content-Length"].data());
         if (!content_len)
@@ -47,12 +47,12 @@ namespace sms
         return content_len;
     }
 
-    void RtspSplitter::on_recv_content(const uint8_t *data, size_t len)
+    void RtspSplitter::on_recv_content(const char *data, size_t len)
     {
-        std::string str(reinterpret_cast<const char *>(data), len);
+        std::string str(data, len);
         LOG_I << "################ content: " << str;
 
-        parser_.SetContent(std::string(reinterpret_cast<const char *>(data), len));
+        parser_.SetContent(std::string(data, len));
         on_whole_rtsp_packet(parser_);
     }
 

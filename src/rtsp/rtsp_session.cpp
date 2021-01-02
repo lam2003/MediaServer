@@ -19,7 +19,7 @@ namespace sms
     {
     }
 
-    size_t RtspSession::OnRecv(const uint8_t *data, size_t len)
+    size_t RtspSession::OnRecv(const char *data, size_t len)
     {
         // invoke HttpRequestSplitter::Input()
         size_t consumed = Input(data, len);

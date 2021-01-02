@@ -43,4 +43,14 @@ namespace sms
         return get_track_type(GetCodecId());
     }
 
+    char *FrameImpl::Data() const
+    {
+        return buffer_.Data();
+    }
+
+    size_t FrameImpl::Size() const
+    {
+        return buffer_.Size();
+    }
+
 } // namespace sms

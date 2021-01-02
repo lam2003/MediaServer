@@ -12,7 +12,7 @@ namespace sms
         int i = 0;
         for (const Buffer::Ptr &ptr : pkt_list_)
         {
-            buf_[i].base = reinterpret_cast<char *>(ptr->Data());
+            buf_[i].base = ptr->Data();
             buf_[i].len = ptr->Size();
             remain_size_ += ptr->Size();
             ++i;
@@ -41,7 +41,7 @@ namespace sms
             }
 
             int remain_size = offset - n;
-            buf_->base = reinterpret_cast<char *>(buf_->base + buf_->len - remain_size);
+            buf_->base = buf_->base + buf_->len - remain_size;
             buf_->len = remain_size;
             buf_off_ = i;
             if (remain_size == 0)

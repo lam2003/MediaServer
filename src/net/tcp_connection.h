@@ -12,7 +12,7 @@ namespace sms
     public:
         using WriteCB = std::function<void(bool)>;
         using ClosedCB = std::function<void(TcpConnection *)>;
-        using ReadCB = std::function<size_t(TcpConnection *, const uint8_t *data, size_t len)>;
+        using ReadCB = std::function<size_t(TcpConnection *, const char *data, size_t len)>;
         using ErrorCB = std::function<void(const SockException &)>;
 
         class UvWriteData : public NonCopyable

@@ -14,9 +14,9 @@ namespace sms
 
     protected:
         // override HttpRequestSplitter
-        virtual const uint8_t *on_search_packet_tail(const uint8_t *data, size_t len) override;
-        virtual size_t on_recv_header(const uint8_t *data, size_t len) override;
-        virtual void on_recv_content(const uint8_t *data, size_t len) override;
+        virtual const char *on_search_packet_tail(const char *data, size_t len) override;
+        virtual size_t on_recv_header(const char *data, size_t len) override;
+        virtual void on_recv_content(const char *data, size_t len) override;
 
     protected:
         virtual void on_whole_rtsp_packet(HttpParser &parser) = 0;

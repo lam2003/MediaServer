@@ -13,12 +13,12 @@ namespace sms
     {
     }
 
-    size_t HttpRequestSplitter::Input(const uint8_t *data, size_t len)
+    size_t HttpRequestSplitter::Input(const char *data, size_t len)
     {
         size_t rest_len = len;
         size_t last_head_len = 0;
-        const uint8_t *head_front = data;
-        const uint8_t *head_tail = data;
+        const char *head_front = data;
+        const char *head_tail = data;
 
     again:
         while (content_len_ == 0 && rest_len != 0 && (head_tail = on_search_packet_tail(head_front, rest_len)))
@@ -74,14 +74,14 @@ namespace sms
         return len;
     }
 
-    const uint8_t *HttpRequestSplitter::on_search_packet_tail(const uint8_t *data, size_t len)
+    const char *HttpRequestSplitter::on_search_packet_tail(const char *data, size_t len)
     {
-        char *pos = strstr(const_cast<char *>(reinterpret_cast<const char *>(data)), SMS_HTTP_HEADER_END);
+        const char *pos = strstr(data, SMS_HTTP_HEADER_END);
         if (!pos)
         {
             return nullptr;
         }
-        return reinterpret_cast<uint8_t *>(pos + SMS_HTTP_HEADER_END_LEN);
+        return pos + SMS_HTTP_HEADER_END_LEN;
     }
 
 } // namespace sms

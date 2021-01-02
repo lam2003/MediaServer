@@ -14,7 +14,7 @@ namespace sms
 
     public:
         virtual void OnError(const SockException &err) = 0;
-        virtual size_t OnRecv(const uint8_t *data, size_t len) = 0;
+        virtual size_t OnRecv(const char *data, size_t len) = 0;
         virtual void OnManage() = 0;
 
     protected:

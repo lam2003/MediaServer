@@ -176,7 +176,7 @@ namespace sms
             return;
         }
 
-        uv_buf_t buffer = uv_buf_init(reinterpret_cast<char *>(buf->Data()), buf->Size());
+        uv_buf_t buffer = uv_buf_init(buf->Data(), buf->Size());
         int written = uv_try_write(reinterpret_cast<uv_stream_t *>(uv_handle_),
                                    &buffer,
                                    1);
@@ -333,7 +333,7 @@ namespace sms
         }
         else
         {
-            read_cb_ = [](TcpConnection *conn, const uint8_t *data, size_t len) {
+            read_cb_ = [](TcpConnection *conn, const char *data, size_t len) {
                 LOG_W << "on read callback not set! drop " << len << " bytes data";
                 return len;
             };
@@ -447,7 +447,7 @@ namespace sms
 
     inline void TcpConnection::OnUvAlloc(size_t suggested_size, uv_buf_t *buf)
     {
-        buf->base = reinterpret_cast<char *>(buffer_.Data() + buffer_data_len_);
+        buf->base = buffer_.Data() + buffer_data_len_;
 
         if (buffer_.Capacity() > buffer_data_len_)
         {
@@ -520,7 +520,7 @@ namespace sms
 
         size_t consumed = 0;
         consumed = read_cb_(this,
-                            reinterpret_cast<const uint8_t *>(buffer_.Data() + read_pos_),
+                            buffer_.Data() + read_pos_,
                             data_len);
 
         if (consumed >= data_len)

@@ -54,21 +54,9 @@ int main(int argc, char **argv)
         // ll.push_back(buf);
         // LOG_I << cc->GetPeerPort() << " connected";
 
-                RtspSession *ss = new RtspSession(cc);
-        cc->SetReadCB([ss](TcpConnection *cc, const uint8_t *data, size_t len) {
-            // cc->Close();
-            // LOG_E << "################################## " << std::string(reinterpret_cast<const char *>(data), len);
-    
-           return  ss->OnRecv(data,len);
-            // session
-            // HttpParser parser;
-
-            // ss.Input(data, len);
-            // cc->Close();
-            // parser.Process(std::string(reinterpret_cast<const char *>(data), len));
-            // std::string str(reinterpret_cast<const char *>(data), len);
-            // LOG_D << str;
-            // return len;
+        RtspSession *ss = new RtspSession(cc);
+        cc->SetReadCB([ss](TcpConnection *cc, const char *data, size_t len) {
+            return ss->OnRecv(data, len);
         });
 
         // cc->Write(std::make_shared<BufferList>(ll), [cc](bool v) {

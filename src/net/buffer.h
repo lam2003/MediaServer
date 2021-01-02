@@ -18,14 +18,13 @@ namespace sms
         virtual ~Buffer() = default;
 
     public:
-        virtual uint8_t *Data() const = 0;
+        virtual char *Data() const = 0;
 
         virtual size_t Size() const = 0;
 
         virtual std::string ToString() const
         {
-            return std::string(reinterpret_cast<const char *>(Data()),
-                               Size());
+            return std::string(Data(), Size());
         }
 
         virtual size_t Capacity() const
@@ -76,9 +75,9 @@ namespace sms
 
     public:
         // class Buffer;
-        uint8_t *Data() const override
+        char *Data() const override
         {
-            return reinterpret_cast<uint8_t *>(const_cast<char *>(str_.data())) + erase_head_;
+            return const_cast<char *>(str_.data()) + erase_head_;
         }
 
         size_t Size() const override
@@ -155,7 +154,7 @@ namespace sms
 
         BufferLikeString &Append(const BufferLikeString &str)
         {
-            Append(reinterpret_cast<const char *>(str.Data()), str.Size());
+            Append(str.Data(), str.Size());
             return *this;
         }
 
@@ -228,7 +227,7 @@ namespace sms
                 return zero_;
             }
 
-            return reinterpret_cast<char *>(Data())[pos];
+            return Data()[pos];
         }
 
         const char &operator[](std::string::size_type pos) const
@@ -238,7 +237,7 @@ namespace sms
                 return zero_;
             }
 
-            return reinterpret_cast<char *>(Data())[pos];
+            return Data()[pos];
         }
 
         void Reserve(std::string::size_type size)
@@ -311,9 +310,9 @@ namespace sms
             setup();
         }
 
-        uint8_t *Data() const override
+        char *Data() const override
         {
-            return const_cast<uint8_t *>((reinterpret_cast<const uint8_t *>(data_.data() + offset_)));
+            return const_cast<char *>(data_.data()) + offset_;
         }
 
         size_t Size() const override
@@ -323,7 +322,7 @@ namespace sms
 
         std::string ToString() const override
         {
-            return std::string(reinterpret_cast<const char *>(Data()), Size());
+            return std::string(Data(), Size());
         }
 
     private:
@@ -371,7 +370,7 @@ namespace sms
         }
 
     public:
-        uint8_t *Data() const override
+        char *Data() const override
         {
             return data_;
         }
@@ -416,7 +415,7 @@ namespace sms
 
                 delete[] data_;
             }
-            data_ = new uint8_t[capacity];
+            data_ = new char[capacity];
             capacity_ = capacity;
         }
 
@@ -444,7 +443,7 @@ namespace sms
         }
 
     private:
-        uint8_t *data_{nullptr};
+        char *data_{nullptr};
         size_t capacity_{0};
         size_t size_{0};
     };

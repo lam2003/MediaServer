@@ -14,7 +14,7 @@ namespace sms
     public:
         // override TcpSession
         void OnError(const SockException &err) override;
-        size_t OnRecv(const uint8_t *data, size_t len) override;
+        size_t OnRecv(const char *data, size_t len) override;
         void OnManage() override;
 
     protected:

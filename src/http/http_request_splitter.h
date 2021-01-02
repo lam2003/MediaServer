@@ -12,14 +12,14 @@ namespace sms
         virtual ~HttpRequestSplitter();
 
     public:
-        size_t Input(const uint8_t *data, size_t len);
+        size_t Input(const char *data, size_t len);
 
     protected:
-        virtual const uint8_t *on_search_packet_tail(const uint8_t *data, size_t len);
+        virtual const char *on_search_packet_tail(const char *data, size_t len);
 
-        virtual size_t on_recv_header(const uint8_t *data, size_t len) = 0;
+        virtual size_t on_recv_header(const char *data, size_t len) = 0;
 
-        virtual void on_recv_content(const uint8_t *data, uint64_t len) = 0;
+        virtual void on_recv_content(const char *data, uint64_t len) = 0;
 
     protected:
         HttpParser parser_;
