@@ -142,35 +142,64 @@ namespace sms
                      uint64_t pts = 0,
                      size_t prefix_size = 0);
 
+        virtual ~FrameFromPtr() override = default;
+
     public:
         // class Buffer
-        char *Data() const override;
+        virtual char *Data() const override;
 
-        size_t Size() const override;
+        virtual size_t Size() const override;
 
     public:
         // class Frame
-        uint64_t GetDTS() const override;
+        virtual uint64_t GetDTS() const override;
 
-        uint64_t GetPTS() const override;
+        virtual uint64_t GetPTS() const override;
 
-        size_t PrefixSize() const override;
+        virtual size_t PrefixSize() const override;
 
-        bool IsKeyFrame() const override;
+        virtual bool IsKeyFrame() const override;
 
-        bool IsConfigFrame() const override;
+        virtual bool IsConfigFrame() const override;
 
     public:
         // class CodecInfo
-        CodecId GetCodecId() const override;
+        virtual CodecId GetCodecId() const override;
 
-    private:
+    protected:
+        FrameFromPtr() = default;
+
+    protected:
         char *ptr_{nullptr};
         size_t size_{0};
         uint64_t dts_{0};
         uint64_t pts_{0};
         size_t prefix_size_{0};
         CodecId codec_id_{CodecId::UNSET};
+    };
+
+    class FrameCacheable final : public FrameFromPtr
+    {
+    public:
+        using Ptr = std::shared_ptr<FrameCacheable>;
+
+        FrameCacheable(const Frame::Ptr &frame);
+
+        ~FrameCacheable() override = default;
+
+    public:
+        // class Frame
+        bool IsCacheAble() const override;
+
+        bool IsKeyFrame() const override;
+
+        bool IsConfigFrame() const override;
+
+    private:
+        Frame::Ptr frame_{nullptr};
+        BufferRaw::Ptr buffer_{nullptr};
+        bool key_{false};
+        bool config_{false};
     };
 
     class FrameWriterInterface

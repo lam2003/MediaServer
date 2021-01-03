@@ -54,8 +54,8 @@ namespace sms
         {
             return frame;
         }
-        // return std::make_shared<Frame>(frame);
-        return nullptr;
+        
+        return std::make_shared<FrameCacheable>(frame);
     }
 
     char *FrameImpl::Data() const
@@ -164,6 +164,44 @@ namespace sms
     CodecId FrameFromPtr::GetCodecId() const
     {
         return codec_id_;
+    }
+
+    FrameCacheable::FrameCacheable(const Frame::Ptr &frame)
+    {
+        if (frame->IsCacheAble())
+        {
+            frame_ = frame;
+            ptr_ = frame_->Data();
+        }
+        else
+        {
+            buffer_ = std::make_shared<BufferRaw>();
+            buffer_->Assign(frame->Data(), frame->Size());
+            ptr_ = buffer_->Data();
+        }
+
+        size_ = frame->Size();
+        dts_ = frame->GetDTS();
+        pts_ = frame->GetPTS();
+        prefix_size_ = frame->PrefixSize();
+        codec_id_ = frame->GetCodecId();
+        key_ = frame->IsKeyFrame();
+        config_ = frame->IsConfigFrame();
+    }
+
+    bool FrameCacheable::IsCacheAble() const
+    {
+        return true;
+    }
+
+    bool FrameCacheable::IsKeyFrame() const
+    {
+        return key_;
+    }
+
+    bool FrameCacheable::IsConfigFrame() const
+    {
+        return config_;
     }
 
 } // namespace sms
