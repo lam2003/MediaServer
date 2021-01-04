@@ -54,7 +54,7 @@ namespace sms
         {
             return frame;
         }
-        
+
         return std::make_shared<FrameCacheable>(frame);
     }
 
@@ -204,4 +204,36 @@ namespace sms
         return config_;
     }
 
+    FrameWriterInterfaceHelper::FrameWriterInterfaceHelper(WriteFrameCB &&cb)
+    {
+        cb_ = std::move(cb);
+    }
+
+    void FrameWriterInterfaceHelper::InputFrame(const Frame::Ptr &frame)
+    {
+        cb_(frame);
+    }
+
+    void FrameDispatcher::AddDelegate(const FrameWriterInterface::Ptr &delegate)
+    {
+        delegates_.emplace(delegate.get(), delegate);
+    }
+
+    void FrameDispatcher::DelDelegate(const FrameWriterInterface::Ptr &delegate)
+    {
+        delegates_.erase(delegate.get());
+    }
+
+    size_t FrameDispatcher::Size() const
+    {
+        return delegates_.size();
+    }
+
+    void FrameDispatcher::InputFrame(const Frame::Ptr &frame)
+    {
+        for (auto &ptr : delegates_)
+        {
+            ptr.second->InputFrame(frame);
+        }
+    }
 } // namespace sms

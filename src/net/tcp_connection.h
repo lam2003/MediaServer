@@ -3,11 +3,12 @@
 
 #include <net/buffer.h>
 #include <net/socket_exception.h>
+#include <net/socket_info.h>
 
 namespace sms
 {
 
-    class TcpConnection : public NonCopyable
+    class TcpConnection : public SocketInfo, public NonCopyable
     {
     public:
         using WriteCB = std::function<void(bool)>;
@@ -53,15 +54,26 @@ namespace sms
         void SetErrorCB(ErrorCB &&error_cb);
 
         void Dump() const;
-        const struct sockaddr *GetLocalAddr() const;
-        int GetLocalFamily() const;
-        uint16_t GetLocalPort() const;
-        const struct sockaddr *GetPeerAddr() const;
-        uint16_t GetPeerPort() const;
         bool IsClosed() const;
         uv_tcp_t *GetUvHandle() const;
         size_t GetSentBytes() const;
         size_t GetRecvBytes() const;
+
+    public:
+        // class SocketInfo
+        const std::string &GetLocalIP() const override;
+
+        const std::string &GetPeerIP() const override;
+
+        uint16_t GetLocalPort() const override;
+
+        uint16_t GetPeerPort() const override;
+
+        const struct sockaddr *GetLocalAddr() const override;
+
+        const struct sockaddr *GetPeerAddr() const override;
+
+        int GetLocalFamily() const override;
 
     public:
         void OnUvRead(ssize_t nread, const uv_buf_t *buf);

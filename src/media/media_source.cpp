@@ -6,6 +6,21 @@
 namespace sms
 {
 
+    Track::Ptr TrackSource::GetTrack(TrackType type, bool ready) const
+    {
+        const std::vector<Track::Ptr> &tracks = GetTracks(ready);
+
+        for (auto &ptr : tracks)
+        {
+            if (ptr->GetTrackType() == type)
+            {
+                return ptr;
+            }
+        }
+        
+        return nullptr;
+    }
+
     MediaInfo::MediaInfo(const std::string &url)
     {
         Process(url);

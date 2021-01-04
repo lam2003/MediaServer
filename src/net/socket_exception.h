@@ -13,6 +13,7 @@ namespace sms
         {
             UNSET = 0,
             SHUTDOWN = 1,
+            OTHER = 2,
         };
 
     public:

@@ -380,6 +380,26 @@ namespace sms
               << "</TcpConnection>" << std::endl;
     }
 
+    const std::string &TcpConnection::GetLocalIP() const
+    {
+        return local_ip_;
+    }
+
+    const std::string &TcpConnection::GetPeerIP() const
+    {
+        return peer_ip_;
+    }
+
+    uint16_t TcpConnection::GetLocalPort() const
+    {
+        return local_port_;
+    }
+
+    uint16_t TcpConnection::GetPeerPort() const
+    {
+        return peer_port_;
+    }
+
     const struct sockaddr *TcpConnection::GetLocalAddr() const
     {
         return reinterpret_cast<struct sockaddr *>(local_addr_);
@@ -390,19 +410,11 @@ namespace sms
         return reinterpret_cast<const struct sockaddr *>(this->local_addr_)->sa_family;
     }
 
-    uint16_t TcpConnection::GetLocalPort() const
-    {
-        return local_port_;
-    }
     const struct sockaddr *TcpConnection::GetPeerAddr() const
     {
         return reinterpret_cast<const struct sockaddr *>(&peer_addr_);
     }
 
-    uint16_t TcpConnection::GetPeerPort() const
-    {
-        return peer_port_;
-    }
     bool TcpConnection::IsClosed() const
     {
         return closed_;

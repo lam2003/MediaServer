@@ -208,10 +208,53 @@ namespace sms
         using Ptr = std::shared_ptr<FrameWriterInterface>;
 
         FrameWriterInterface() = default;
+
         virtual ~FrameWriterInterface() = default;
 
-        // public:
-        // virtual void InputFrame(const)
+    public:
+        virtual void InputFrame(const Frame::Ptr &frame) = 0;
+    };
+
+    class FrameWriterInterfaceHelper final : public FrameWriterInterface
+    {
+    public:
+        using Ptr = std::shared_ptr<FrameWriterInterface>;
+
+        using WriteFrameCB = std::function<void(const Frame::Ptr &)>;
+
+        FrameWriterInterfaceHelper(WriteFrameCB &&cb);
+
+        ~FrameWriterInterfaceHelper() override = default;
+
+    public:
+        void InputFrame(const Frame::Ptr &frame) override;
+
+    private:
+        WriteFrameCB cb_;
+    };
+
+    class FrameDispatcher : public FrameWriterInterface
+    {
+    public:
+        using Ptr = std::shared_ptr<FrameDispatcher>;
+
+        FrameDispatcher() = default;
+
+        virtual ~FrameDispatcher() override = default;
+
+    public:
+        void AddDelegate(const FrameWriterInterface::Ptr &delegate);
+
+        void DelDelegate(const FrameWriterInterface::Ptr &delegate);
+
+        size_t Size() const;
+
+    public:
+        // class FrameWriterInterface
+        virtual void InputFrame(const Frame::Ptr &frame) override;
+
+    private:
+        std::map<void *, FrameWriterInterface::Ptr> delegates_;
     };
 } // namespace sms
 #endif
