@@ -15,6 +15,37 @@ namespace sms
         RTSP = 1,
     };
 
+    class MediaInfo
+    {
+    public:
+        MediaInfo() = default;
+        MediaInfo(const std::string &url);
+        ~MediaInfo() = default;
+
+    public:
+        void Process(const std::string &url);
+
+        const std::string &FullUrl();
+        const std::string &Schema();
+        const std::string &Host();
+        const std::string &Port();
+        const std::string &Vhost();
+        const std::string &App();
+        const std::string &StreamID();
+        const std::string &ParamStrs();
+        void SetSchema(const std::string &schema);
+
+    private:
+        std::string full_url_;
+        std::string schema_;
+        std::string host_;
+        std::string port_;
+        std::string vhost_;
+        std::string app_;
+        std::string stream_id_;
+        std::string param_strs_;
+    };
+
     class TrackSource
     {
     public:
@@ -29,12 +60,12 @@ namespace sms
     };
 
     class MediaSource;
-    class MedisSourceEventListener
+    class MediaSourceEventListener
     {
     public:
-        MedisSourceEventListener() = default;
+        MediaSourceEventListener() = default;
 
-        virtual ~MedisSourceEventListener() = default;
+        virtual ~MediaSourceEventListener() = default;
 
     public:
         virtual MediaOriginType GetOriginType(const MediaSource &sender) const;
@@ -85,9 +116,14 @@ namespace sms
         virtual ~MediaSource();
 
     public:
-        virtual uint64_t GetTimeStamp(TrackType type) const;
+        virtual uint64_t GetTimeStamp(TrackType type) const
+        {
+            return 0;
+        }
 
-        virtual uint64_t SetTimeStamp(uint64_t ts);
+        virtual uint64_t SetTimeStamp(uint64_t ts)
+        {
+        }
 
         const std::string &GetSchema() const;
 
@@ -106,38 +142,16 @@ namespace sms
     public:
         // class TrackSource
         std::vector<Track::Ptr> GetTracks(bool ready = true) const override;
-    };
-
-    class MediaInfo
-    {
-    public:
-        MediaInfo() = default;
-        MediaInfo(const std::string &url);
-        ~MediaInfo() = default;
-
-    public:
-        void Process(const std::string &url);
-
-        const std::string &FullUrl();
-        const std::string &Schema();
-        const std::string &Host();
-        const std::string &Port();
-        const std::string &Vhost();
-        const std::string &App();
-        const std::string &StreamID();
-        const std::string &ParamStrs();
-        void SetSchema(const std::string &schema);
 
     private:
-        std::string full_url_;
+        time_t create_stamp_;
         std::string schema_;
-        std::string host_;
-        std::string port_;
         std::string vhost_;
         std::string app_;
         std::string stream_id_;
-        std::string param_strs_;
+        std::weak_ptr<MediaSourceEventListener> listener_;
     };
+
 } // namespace sms
 
 #endif

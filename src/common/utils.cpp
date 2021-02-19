@@ -113,4 +113,77 @@ namespace sms
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
     }
 
+    static inline uint64_t get_current_microseconds_origin()
+    {
+        timeval tv;
+        gettimeofday(&tv, nullptr); // 0 time zone
+        return tv.tv_sec * 1000000LL + tv.tv_usec;
+    }
+
+    static std::atomic<uint64_t> s_current_microseconds(0);
+    static std::atomic<uint64_t> s_current_milliseconds(0);
+    static std::atomic<uint64_t> s_current_microseconds_system(get_current_microseconds_origin());
+    static std::atomic<uint64_t> s_current_milliseconds_system(get_current_microseconds_origin() / 1000);
+
+    static inline bool init_time_flush_thread()
+    {
+        static std::thread s_thread([]() {
+            uint64_t last = get_current_microseconds_origin();
+            uint64_t now = 0;
+            uint64_t microseconds = 0;
+
+            while (true)
+            {
+                now = get_current_microseconds_origin();
+                s_current_microseconds.store(now, std::memory_order_relaxed);
+                s_current_milliseconds.store(now / 1000, std::memory_order_relaxed);
+
+                int64_t elapsed = now - last;
+                if (elapsed > 0 &&
+                    elapsed < 1000 * 1000)
+                {
+                    microseconds += elapsed;
+                    s_current_microseconds_system.store(microseconds, std::memory_order_relaxed);
+                    s_current_milliseconds_system.store(microseconds / 1000, std::memory_order_relaxed);
+                }
+                else
+                {
+                    // system time has been modified
+                }
+
+                // 0.5 ms
+                usleep(500);
+            }
+        });
+
+        static OnceToken s_token([]() {
+            s_thread.detach();
+        });
+        return true;
+    }
+
+    uint64_t get_current_microseconds(bool system_time)
+    {
+        static bool s_flag = init_time_flush_thread();
+
+        if (system_time)
+        {
+            return s_current_microseconds_system;
+        }
+
+        return s_current_microseconds;
+    }
+
+    uint64_t get_current_milliseconds(bool system_time)
+    {
+        static bool s_flag = init_time_flush_thread();
+
+        if (system_time)
+        {
+            return s_current_milliseconds_system;
+        }
+
+        return s_current_milliseconds;
+    }
+
 } // namespace sms

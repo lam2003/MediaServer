@@ -17,7 +17,6 @@ namespace sms
                 return ptr;
             }
         }
-        
         return nullptr;
     }
 
@@ -143,4 +142,49 @@ namespace sms
     {
         schema_ = schema;
     }
+
+    MediaSource::MediaSource(const std::string &schema,
+                             const std::string &vhost,
+                             const std::string &app,
+                             const std::string &stream_id)
+    {
+        schema_ = schema;
+        vhost_ = vhost;
+        app_ = app;
+        stream_id_ = stream_id;
+    }
+
+    const std::string &MediaSource::GetSchema() const
+    {
+        return schema_;
+    }
+
+    const std::string &MediaSource::GetVhost() const
+    {
+        return vhost_;
+    }
+
+    const std::string &MediaSource::GetApp() const
+    {
+        return app_;
+    }
+
+    const std::string &MediaSource::GetStreamId() const
+    {
+        return stream_id_;
+    }
+
+    std::vector<Track::Ptr> MediaSource::GetTracks(bool ready) const
+    {
+        std::shared_ptr<MediaSourceEventListener> listener = listener_.lock();
+        if (!listener)
+        {
+            return std::vector<Track::Ptr>();
+        }
+
+        return listener->GetTracks(*this, ready);
+    }
+
+
+    
 } // namespace sms
