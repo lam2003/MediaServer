@@ -5,21 +5,7 @@
 
 namespace sms
 {
-
-    Track::Ptr TrackSource::GetTrack(TrackType type, bool ready) const
-    {
-        const std::vector<Track::Ptr> &tracks = GetTracks(ready);
-
-        for (auto &ptr : tracks)
-        {
-            if (ptr->GetTrackType() == type)
-            {
-                return ptr;
-            }
-        }
-        return nullptr;
-    }
-
+    ///////////////////////////////////MediaInfo////////////////////////////////////
     MediaInfo::MediaInfo(const std::string &url)
     {
         Process(url);
@@ -143,6 +129,162 @@ namespace sms
         schema_ = schema;
     }
 
+    ///////////////////////////////////MediaSourceEventInterceptor////////////////////////////////////
+    void MediaSourceEventInterceptor::SetDelegate(const std::weak_ptr<MediaSourceEventListener> &listener)
+    {
+        if (listener_.lock().get() == this)
+        {
+            throw std::invalid_argument("can't set self to delegate");
+        }
+        listener_ = listener;
+    }
+
+    MediaSourceEventListener::Ptr MediaSourceEventInterceptor::GetDelegate() const
+    {
+        return listener_.lock();
+    }
+
+    MediaOriginType MediaSourceEventInterceptor::GetOriginType(const MediaSource &sender) const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return MediaOriginType::UNSET;
+        }
+        return listener->GetOriginType(sender);
+    }
+
+    std::string MediaSourceEventInterceptor::GetOriginUrl(const MediaSource &sender) const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return "";
+        }
+        return listener->GetOriginUrl(sender);
+    }
+
+    SocketInfo::Ptr MediaSourceEventInterceptor::GetOriginSocket(const MediaSource &sender) const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return nullptr;
+        }
+        return listener->GetOriginSocket(sender);
+    }
+
+    bool MediaSourceEventInterceptor::SeekTo(MediaSource &sender, uint64_t ts)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return false;
+        }
+        return listener->SeekTo(sender, ts);
+    }
+
+    bool MediaSourceEventInterceptor::Close(MediaSource &sender, bool force)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return false;
+        }
+        return listener->Close(sender, force);
+    }
+
+    int MediaSourceEventInterceptor::TotalReadercount(const MediaSource &sender) const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return sender.ReaderCount();
+        }
+        return listener->TotalReadercount(sender);
+    }
+
+    void MediaSourceEventInterceptor::OnReaderChanged(const MediaSource &sender, int size)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (listener)
+        {
+            listener->OnReaderChanged(sender, size);
+        }
+    }
+
+    void MediaSourceEventInterceptor::OnRegist(MediaSource &sender, bool regist)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (listener)
+        {
+            listener->OnRegist(sender, regist);
+        }
+    }
+
+    bool MediaSourceEventInterceptor::SetupRecord(MediaSource &sender,
+                                                  Recorder::Type type,
+                                                  bool start,
+                                                  const std::string &path)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return false;
+        }
+        return listener->SetupRecord(sender, type, start, path);
+    }
+
+    bool MediaSourceEventInterceptor::IsRecording(const MediaSource &sender, Recorder::Type type) const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return false;
+        }
+        return listener->IsRecording(sender, type);
+    }
+
+    std::vector<Track::Ptr> MediaSourceEventInterceptor::GetTracks(const MediaSource &sender, bool ready) const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return std::vector<Track::Ptr>();
+        }
+        return listener->GetTracks(sender, ready);
+    }
+
+    void MediaSourceEventInterceptor::StartSendRtp(
+        MediaSource &sender,
+        const std::string &dst_url,
+        uint16_t dst_port,
+        const std::string &ssrc,
+        bool is_udp,
+        std::function<void(const SockException &)> &&cb)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (listener)
+        {
+            return listener->StartSendRtp(sender,
+                                          dst_url,
+                                          dst_port,
+                                          ssrc,
+                                          is_udp,
+                                          std::forward<decltype(cb)>(cb));
+        }
+    }
+
+    void MediaSourceEventInterceptor::StopSendRtp(MediaSource &sender)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (listener)
+        {
+            listener->StopSendRtp(sender);
+        }
+    }
+
+    ///////////////////////////////////MediaSource////////////////////////////////////
     MediaSource::MediaSource(const std::string &schema,
                              const std::string &vhost,
                              const std::string &app,
@@ -152,6 +294,10 @@ namespace sms
         vhost_ = vhost;
         app_ = app;
         stream_id_ = stream_id;
+    }
+
+    MediaSource::~MediaSource()
+    {
     }
 
     const std::string &MediaSource::GetSchema() const
@@ -174,9 +320,177 @@ namespace sms
         return stream_id_;
     }
 
+    int MediaSource::GetBytesSpeed(TrackType type) const
+    {
+        if (type == TrackType::UNSET)
+        {
+            return speed_[(int)TrackType::AUDIO].GetSpeed() +
+                   speed_[(int)TrackType::VIDEO].GetSpeed();
+        }
+        return speed_[(int)type].GetSpeed();
+    }
+
+    uint64_t MediaSource::GetCreateStamp() const
+    {
+        return create_stamp_;
+    }
+
+    uint64_t MediaSource::GetAliveSecond() const
+    {
+        return ticker_.GetCreatedTimeMS() / 1000;
+    }
+
+    void MediaSource::SetListener(const std::weak_ptr<MediaSourceEventListener> &listener)
+    {
+        listener_ = listener;
+    }
+
+    std::weak_ptr<MediaSourceEventListener> MediaSource::GetListener(bool next) const
+    {
+        if (!next)
+        {
+            return listener_;
+        }
+        MediaSourceEventInterceptor::Ptr interceptor =
+            std::dynamic_pointer_cast<MediaSourceEventInterceptor>(listener_.lock());
+        if (!interceptor)
+        {
+            return listener_;
+        }
+        MediaSourceEventListener::Ptr next_obj = interceptor->GetDelegate();
+        return next_obj ? next_obj : listener_;
+    }
+
+    int MediaSource::TotalReaderCount() const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return ReaderCount();
+        }
+        return listener->TotalReadercount(*this);
+    }
+
+    MediaOriginType MediaSource::GetOriginType() const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return MediaOriginType::UNSET;
+        }
+        return listener->GetOriginType(*this);
+    }
+
+    std::string MediaSource::GetOriginUrl() const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return "";
+        }
+        return listener->GetOriginUrl(*this);
+    }
+
+    SocketInfo::Ptr MediaSource::GetOriginSocket() const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return nullptr;
+        }
+        return listener->GetOriginSocket(*this);
+    }
+
+    bool MediaSource::SeekTo(uint64_t ts)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return false;
+        }
+        return listener->SeekTo(*this, ts);
+    }
+
+    bool MediaSource::Close(bool force)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return false;
+        }
+        return listener->Close(const_cast<MediaSource &>(*this), force);
+    }
+
+    void MediaSource::OnRegist(bool regist)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (listener)
+        {
+            return listener->OnRegist(*this, regist);
+        }
+    }
+
+    void MediaSource::OnReaderChanged(int size)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (listener)
+        {
+            return listener->OnReaderChanged(*this, size);
+        }
+    }
+
+    bool MediaSource::SetupRecord(Recorder::Type type,
+                                  bool start,
+                                  const std::string &path)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return false;
+        }
+        return listener->SetupRecord(*this, type, start, path);
+    }
+
+    bool MediaSource::IsRecording(Recorder::Type type) const
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (!listener)
+        {
+            return false;
+        }
+        return listener->IsRecording(*this, type);
+    }
+
+    void MediaSource::StartSendRtp(const std::string &dst_url,
+                                   uint16_t dst_port,
+                                   const std::string &ssrc,
+                                   bool is_udp,
+                                   std::function<void(const SockException &)> &&cb)
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (listener)
+        {
+            return listener->StartSendRtp(*this,
+                                          dst_url,
+                                          dst_port,
+                                          ssrc,
+                                          is_udp,
+                                          std::forward<decltype(cb)>(cb));
+        }
+    }
+
+    void MediaSource::StopSendRtp()
+    {
+        MediaSourceEventListener::Ptr listener = listener_.lock();
+        if (listener)
+        {
+            listener->StopSendRtp(*this);
+        }
+    }
+
     std::vector<Track::Ptr> MediaSource::GetTracks(bool ready) const
     {
-        std::shared_ptr<MediaSourceEventListener> listener = listener_.lock();
+        MediaSourceEventListener::Ptr listener = listener_.lock();
         if (!listener)
         {
             return std::vector<Track::Ptr>();
@@ -185,6 +499,4 @@ namespace sms
         return listener->GetTracks(*this, ready);
     }
 
-
-    
 } // namespace sms

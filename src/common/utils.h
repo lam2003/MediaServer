@@ -66,9 +66,9 @@ namespace sms
 
     void to_lower_case(std::string &str);
 
-    uint64_t get_current_microseconds();
+    uint64_t get_current_microseconds(bool system_time = true);
 
-    uint64_t get_current_milliseconds();
+    uint64_t get_current_milliseconds(bool system_time = true);
 
 } // namespace sms
 

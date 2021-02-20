@@ -19,6 +19,13 @@ namespace sms
         NonCopyable &operator=(NonCopyable &&that) = delete;
     };
 
+#define SMS_NONCOPYABLE_DESTRUCTOR(C) \
+    C(const C &) = delete;            \
+    C(C &&) = delete;                 \
+    C &operator=(const C &) = delete; \
+    C &operator=(C &&) = delete;      \
+    ~C()
+
 } // namespace sms
 
 #endif

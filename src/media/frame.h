@@ -6,19 +6,21 @@
 
 namespace sms
 {
-    enum class CodecId
+    enum class CodecId : int8_t
     {
         UNSET = -1,
         H264,
         H265,
         AAC,
+        MAX
     };
 
-    enum class TrackType
+    enum class TrackType : int8_t
     {
         UNSET = -1,
         AUDIO,
         VIDEO,
+        MAX
     };
 
     class CodecInfo

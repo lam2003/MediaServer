@@ -16,12 +16,12 @@ namespace sms
 
         ~Ticker() = default;
 
-        uint64_t GetCreatedTimeMS()
+        uint64_t GetCreatedTimeMS() const
         {
             return get_current_milliseconds() - create_stamp_;
         }
 
-        uint64_t GetElapsedTimeMS()
+        uint64_t GetElapsedTimeMS() const
         {
             return get_current_milliseconds() - last_stamp_;
         }
