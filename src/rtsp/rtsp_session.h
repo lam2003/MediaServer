@@ -1,6 +1,6 @@
 #include <net/tcp_session.h>
 #include <rtsp/rtsp_splitter.h>
-#include <media/sdp_parser.h>
+#include <common/sdp_parser.h>
 
 namespace sms
 {

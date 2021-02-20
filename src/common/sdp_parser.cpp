@@ -1,7 +1,7 @@
 #include <common/config.h>
 #include <common/utils.h>
 #include <common/logger.h>
-#include <media/sdp_parser.h>
+#include <common/sdp_parser.h>
 
 namespace sms
 {

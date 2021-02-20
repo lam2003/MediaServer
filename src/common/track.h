@@ -1,8 +1,8 @@
 #ifndef SMS_TRACK_H
 #define SMS_TRACK_H
 
-#include <media/frame.h>
-#include <media/sdp_parser.h>
+#include <common/frame.h>
+#include <common/sdp_parser.h>
 
 namespace sms
 {

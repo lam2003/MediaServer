@@ -1,7 +1,6 @@
 #ifndef SMS_FRAME_H
 #define SMS_FRAME_H
 
-#include <common/global_inc.h>
 #include <net/buffer.h>
 
 namespace sms

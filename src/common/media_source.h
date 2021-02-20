@@ -1,11 +1,11 @@
 #ifndef SMS_MEDIA_SOURCE_H
 #define SMS_MEDIA_SOURCE_H
 
-#include <media/track.h>
-#include <media/recorder.h>
+#include <common/track.h>
+#include <common/recorder.h>
+#include <common/bytes_speed.h>
 #include <net/socket_exception.h>
 #include <net/socket_info.h>
-#include <common/bytes_speed.h>
 
 namespace sms
 {

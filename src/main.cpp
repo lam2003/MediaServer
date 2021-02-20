@@ -6,7 +6,7 @@
 #include <net/socket_utils.h>
 #include <http/http_parser.h>
 #include <common/utils.h>
-#include "media/media_source.h"
+#include "common/media_source.h"
 #include "rtsp/rtsp_session.h"
 #include "http/http_request_splitter.h"
 using namespace sms;

@@ -2,7 +2,7 @@
 #define SMS_RTSP_SPLITTER_H
 
 #include <http/http_request_splitter.h>
-#include <media/media_source.h>
+#include <common/media_source.h>
 
 namespace sms
 {

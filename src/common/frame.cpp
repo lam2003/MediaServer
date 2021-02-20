@@ -1,4 +1,4 @@
-#include <media/frame.h>
+#include <common/frame.h>
 
 namespace sms
 {
@@ -206,7 +206,7 @@ namespace sms
 
     FrameWriterInterfaceHelper::FrameWriterInterfaceHelper(WriteFrameCB &&cb)
     {
-        cb_ = std::move(cb);
+        cb_ = std::forward<decltype(cb)>(cb);
     }
 
     void FrameWriterInterfaceHelper::InputFrame(const Frame::Ptr &frame)

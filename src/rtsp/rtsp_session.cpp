@@ -3,7 +3,7 @@
 #include <common/config.h>
 #include <common/once_token.h>
 #include <common/logger.h>
-#include <media/sdp_parser.h>
+#include <common/sdp_parser.h>
 
 #define SMS_RTSP_SCHEMA "rtsp"
 
