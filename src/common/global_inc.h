@@ -21,6 +21,7 @@
 #include <chrono>
 #include <atomic>
 #include <cstring>
+#include <type_traits>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>

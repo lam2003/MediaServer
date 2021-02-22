@@ -3,6 +3,34 @@
 
 #include <common/global_inc.h>
 
+template <typename... T>
+struct make_void
+{
+    using type = void;
+};
+
+template <typename... T>
+using void_t = typename make_void<T...>::type;
+
+template <typename, template <typename... T> class OP, typename... T>
+struct is_detected_impl : std::false_type
+{
+};
+
+template <template <typename... T> class OP, typename... T>
+struct is_detected_impl<void_t<OP<T...>>, OP, T...> : std::true_type
+{
+};
+
+template <template <typename... T> class OP, typename... T>
+using is_detected = is_detected_impl<void, OP, T...>;
+
+template <typename T>
+using HasPtr_t = typename T::Ptr;
+
+template <typename T>
+using HasPtr = is_detected<HasPtr_t, T>;
+
 #define INSTANCE_IMPL(class_name, ...)                   \
     class_name &class_name::Instance()                   \
     {                                                    \

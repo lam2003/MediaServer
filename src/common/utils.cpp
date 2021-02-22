@@ -164,7 +164,7 @@ namespace sms
 
     uint64_t get_current_microseconds(bool system_time)
     {
-        static bool s_flag = init_time_flush_thread();
+        static bool s_flag __attribute__((unused)) = init_time_flush_thread();
 
         if (system_time)
         {
@@ -176,7 +176,7 @@ namespace sms
 
     uint64_t get_current_milliseconds(bool system_time)
     {
-        static bool s_flag = init_time_flush_thread();
+        static bool s_flag __attribute__((unused)) = init_time_flush_thread();
 
         if (system_time)
         {

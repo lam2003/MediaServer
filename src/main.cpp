@@ -9,6 +9,7 @@
 #include "common/media_source.h"
 #include "rtsp/rtsp_session.h"
 #include "http/http_request_splitter.h"
+#include <common/ring_buffer.h>
 using namespace sms;
 
 void signal_handler(int signo) {}
